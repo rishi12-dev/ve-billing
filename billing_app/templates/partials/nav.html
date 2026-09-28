@@ -9,11 +9,22 @@
   <a href="{{ url_for('main.payments') }}"><span>💳</span> <span>Payments</span></a>
   <a href="{{ url_for('main.reports') }}"><span>📈</span> <span>Reports</span></a>
   <a href="{{ url_for('main.gst_summary') }}"><span>🏛️</span> <span>GST Summary</span></a>
+
+  <div class="nav-section">App & Display</div>
+  <a href="javascript:void(0)" id="menuThemeToggle" class="d-flex justify-content-between align-items-center">
+    <span><span>🌓</span> <span>Dark Mode</span></span>
+    <span class="badge bg-secondary theme-mode-badge">Toggle</span>
+  </a>
+  <a href="javascript:void(0)" id="menuInstallBtn" class="d-flex justify-content-between align-items-center text-teal">
+    <span><span>📥</span> <span>Install App</span></span>
+    <span class="badge bg-success">PWA</span>
+  </a>
+
   {% if is_admin %}
   <div class="nav-section">Settings & Admin</div>
-  <a href="{{ url_for('main.company_settings') }}"><span>🏢</span> <span>Company</span></a>
+  <a href="{{ url_for('main.company_settings') }}"><span>🏢</span> <span>Company Settings</span></a>
   <a href="{{ url_for('main.invoice_number_settings') }}"><span>🔢</span> <span>Invoice Number</span></a>
-  <a href="{{ url_for('main.users') }}"><span>👤</span> <span>Users</span></a>
+  <a href="{{ url_for('main.users') }}"><span>👤</span> <span>Manage Users</span></a>
   <a href="{{ url_for('main.backup') }}"><span>💾</span> <span>Database Backup</span></a>
   {% endif %}
 </div>

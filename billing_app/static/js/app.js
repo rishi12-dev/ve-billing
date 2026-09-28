@@ -28,17 +28,13 @@ function initTheme() {
     (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
   setTheme(currentTheme, false);
 
-  const themeToggleBtn = document.getElementById("themeToggleBtn");
-  const sidebarThemeToggle = document.getElementById("sidebarThemeToggle");
-
-  function handleToggle() {
-    const active = document.documentElement.getAttribute("data-theme") || "light";
-    const next = active === "dark" ? "light" : "dark";
-    setTheme(next, true);
-  }
-
-  if (themeToggleBtn) themeToggleBtn.addEventListener("click", handleToggle);
-  if (sidebarThemeToggle) sidebarThemeToggle.addEventListener("click", handleToggle);
+  document.querySelectorAll("#menuThemeToggle, #themeToggleBtn, #sidebarThemeToggle").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const active = document.documentElement.getAttribute("data-theme") || "light";
+      const next = active === "dark" ? "light" : "dark";
+      setTheme(next, true);
+    });
+  });
 }
 
 function setTheme(theme, save = true) {
@@ -51,9 +47,9 @@ function setTheme(theme, save = true) {
     themeMeta.setAttribute("content", theme === "dark" ? "#0b1120" : "#0f766e");
   }
 
-  const modeTexts = document.querySelectorAll(".theme-mode-text");
-  modeTexts.forEach(el => {
-    el.textContent = theme === "dark" ? "☀️ Light" : "🌙 Dark";
+  const badges = document.querySelectorAll(".theme-mode-badge");
+  badges.forEach(el => {
+    el.textContent = theme === "dark" ? "Dark 🌙" : "Light ☀️";
   });
 
   updateChartTheme(theme);
@@ -67,17 +63,6 @@ let deferredInstallPrompt = null;
 window.addEventListener("beforeinstallprompt", (e) => {
   e.preventDefault();
   deferredInstallPrompt = e;
-
-  // Show install triggers
-  const installBanner = document.getElementById("pwaInstallBanner");
-  const headerInstallBtn = document.getElementById("pwaInstallHeaderBtn");
-  const mobileMenuInstallBtn = document.getElementById("mobileMenuInstallBtn");
-
-  if (installBanner && !sessionStorage.getItem("pwa_banner_dismissed")) {
-    installBanner.style.display = "flex";
-  }
-  if (headerInstallBtn) headerInstallBtn.classList.remove("d-none");
-  if (mobileMenuInstallBtn) mobileMenuInstallBtn.classList.remove("d-none");
 });
 
 function triggerInstall() {
@@ -88,46 +73,23 @@ function triggerInstall() {
         console.log("User installed PWA");
       }
       deferredInstallPrompt = null;
-      hideInstallUI();
     });
   } else {
-    // If iOS Safari or standalone not triggered
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
     if (isIOS) {
-      alert("To install: Tap the Share button (⎙) at the bottom of Safari, then tap 'Add to Home Screen' (+)");
+      alert("iPhone par Install karne ke liye:\n1. Safari ke niche Share (⎙) button par tap karein.\n2. 'Add to Home Screen' (+) choose karein.");
     } else {
-      alert("To install: Tap your browser's menu (⋮) and choose 'Install App' or 'Add to Home screen'.");
+      alert("App Install karne ke liye:\nBrowser menu (⋮) me jaakar 'Install App' ya 'Add to Home screen' par tap karein.");
     }
   }
-}
-
-function hideInstallUI() {
-  const installBanner = document.getElementById("pwaInstallBanner");
-  const headerInstallBtn = document.getElementById("pwaInstallHeaderBtn");
-  const mobileMenuInstallBtn = document.getElementById("mobileMenuInstallBtn");
-
-  if (installBanner) installBanner.style.display = "none";
-  if (headerInstallBtn) headerInstallBtn.classList.add("d-none");
-  if (mobileMenuInstallBtn) mobileMenuInstallBtn.classList.add("d-none");
 }
 
 document.addEventListener("DOMContentLoaded", () => {
   initTheme();
 
-  const bannerBtn = document.getElementById("pwaInstallBannerBtn");
-  const headerBtn = document.getElementById("pwaInstallHeaderBtn");
-  const mobileBtn = document.getElementById("mobileMenuInstallBtn");
-  const dismissBtn = document.getElementById("pwaDismissBannerBtn");
-
-  if (bannerBtn) bannerBtn.addEventListener("click", triggerInstall);
-  if (headerBtn) headerBtn.addEventListener("click", triggerInstall);
-  if (mobileBtn) mobileBtn.addEventListener("click", triggerInstall);
-  if (dismissBtn) {
-    dismissBtn.addEventListener("click", () => {
-      hideInstallUI();
-      sessionStorage.setItem("pwa_banner_dismissed", "true");
-    });
-  }
+  document.querySelectorAll("#menuInstallBtn, #pwaInstallBannerBtn, #pwaInstallHeaderBtn, #mobileMenuInstallBtn").forEach(btn => {
+    btn.addEventListener("click", triggerInstall);
+  });
 });
 
 // ==========================================================================

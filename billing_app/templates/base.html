@@ -43,23 +43,14 @@
 {% if current_user.is_authenticated %}
 <nav class="navbar navbar-dark app-topbar fixed-top">
   <div class="container-fluid">
-    <button class="btn btn-sm btn-outline-light d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileNav">☰</button>
-    <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="{{ url_for('main.dashboard') }}">
-      <img src="{{ url_for('static', filename='icons/icon-32.png') }}" width="28" height="28" class="rounded-circle shadow-sm" alt="Logo">
-      <span>VE-BILLING</span>
-    </a>
+    <div class="d-flex align-items-center gap-2">
+      <button class="btn btn-sm btn-outline-light d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileNav">☰</button>
+      <a class="navbar-brand fw-bold d-flex align-items-center gap-2 mb-0" href="{{ url_for('main.dashboard') }}">
+        <img src="{{ url_for('static', filename='icons/icon-32.png') }}" width="28" height="28" class="rounded-circle shadow-sm" alt="Logo">
+        <span>VE-BILLING</span>
+      </a>
+    </div>
     <div class="d-flex align-items-center gap-2 text-white small">
-      <!-- Dark/Light Mode Switcher -->
-      <button class="btn btn-sm btn-theme-toggle" id="themeToggleBtn" type="button" title="Toggle Theme">
-        <span class="theme-icon-light">☀️</span>
-        <span class="theme-icon-dark">🌙</span>
-      </button>
-      
-      <!-- In-app Install Trigger (Desktop/Mobile) -->
-      <button class="btn btn-sm btn-install-app d-none" id="pwaInstallHeaderBtn" type="button">
-        📥 <span>Install</span>
-      </button>
-
       <span class="d-none d-sm-inline opacity-75">{{ current_user.name }}</span>
       <a class="btn btn-sm btn-light-glass" href="{{ url_for('auth.logout') }}">Logout</a>
     </div>
@@ -80,33 +71,9 @@
   </div>
   <div class="offcanvas-body p-0">
     {% include "partials/nav.html" %}
-    <div class="p-3 border-top mt-auto">
-      <button class="btn btn-sm w-100 btn-outline-secondary d-flex align-items-center justify-content-center gap-2 mb-2" id="sidebarThemeToggle">
-        <span>Toggle Theme</span>
-        <span class="theme-mode-text">🌙 Dark</span>
-      </button>
-      <button class="btn btn-sm w-100 btn-primary d-none" id="mobileMenuInstallBtn">
-        📥 Install Web App
-      </button>
-    </div>
   </div>
 </div>
 {% endif %}
-
-<!-- Floating PWA Install Prompt Banner -->
-<div class="pwa-install-banner" id="pwaInstallBanner" style="display:none;">
-  <div class="pwa-banner-content">
-    <img src="{{ url_for('static', filename='icons/icon-96.png') }}" width="42" height="42" class="rounded-3 shadow-sm" alt="App Icon">
-    <div class="pwa-banner-text">
-      <strong>Install VE-Billing</strong>
-      <small class="text-muted d-block">Add to home screen for faster 1-tap billing</small>
-    </div>
-  </div>
-  <div class="pwa-banner-actions">
-    <button class="btn btn-sm btn-primary px-3 fw-semibold" id="pwaInstallBannerBtn">Install</button>
-    <button class="btn btn-sm btn-close p-2" id="pwaDismissBannerBtn" aria-label="Close"></button>
-  </div>
-</div>
 
 <main class="{% if current_user.is_authenticated %}app-main{% else %}auth-main{% endif %}">
   <div class="container-fluid">
