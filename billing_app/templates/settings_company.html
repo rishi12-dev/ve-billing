@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head"><h1>Company Profile</h1></div>
+<section class="panel">
+  <form class="grid-form" method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    {% for name,label in [('company_name','Company Name'),('city','City'),('state','State'),('pin_code','PIN Code'),('phone','Phone'),('email','Email'),('gstin','GSTIN'),('pan','PAN'),('bank_name','Bank Name'),('account_number','Account Number'),('ifsc','IFSC'),('branch','Branch'),('signatory_name','Authorized Signatory Name'),('default_pdf_template','Default PDF Template')] %}
+    <div><label class="form-label">{{ label }}</label><input class="form-control" name="{{ name }}" value="{{ company|attr(name) or '' }}"></div>
+    {% endfor %}
+    <div class="wide"><label class="form-label">Address</label><textarea class="form-control" name="address">{{ company.address }}</textarea></div>
+    <div class="wide"><label class="form-label">Terms & Conditions</label><textarea class="form-control" name="terms">{{ company.terms }}</textarea></div>
+    <div class="wide"><button class="btn btn-primary">Save Company Details</button></div>
+  </form>
+</section>
+{% endblock %}

@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head"><h1>Users</h1></div>
+<section class="panel">
+  <form class="grid-form" method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div><label class="form-label">Name</label><input class="form-control" name="name" required></div>
+    <div><label class="form-label">Username</label><input class="form-control" name="username" required></div>
+    <div><label class="form-label">Email</label><input class="form-control" name="email" type="email" required></div>
+    <div><label class="form-label">Password</label><input class="form-control" name="password" type="password" required></div>
+    <div><label class="form-label">Role</label><select class="form-select" name="role"><option>staff</option><option>admin</option></select></div>
+    <div class="wide"><button class="btn btn-primary">Create User</button></div>
+  </form>
+</section>
+<section class="panel"><div class="table-responsive"><table class="table"><thead><tr><th>Name</th><th>Username</th><th>Email</th><th>Role</th><th>Active</th></tr></thead><tbody>{% for u in users %}<tr><td>{{ u.name }}</td><td>{{ u.username }}</td><td>{{ u.email }}</td><td>{{ u.role }}</td><td>{{ u.active }}</td></tr>{% endfor %}</tbody></table></div></section>
+{% endblock %}

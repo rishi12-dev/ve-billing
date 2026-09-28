@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head"><h1>Invoices</h1><a class="btn btn-primary" href="{{ url_for('main.new_invoice') }}">New Invoice</a></div>
+<section class="panel">
+  <form class="search-row"><input class="form-control" name="q" placeholder="Invoice, customer, ship, GSTIN, status"><button class="btn btn-outline-primary">Search</button><a class="btn btn-outline-secondary" href="{{ url_for('main.export', dataset='invoices') }}">Export Excel</a></form>
+  <div class="table-responsive"><table class="table align-middle">
+    <thead><tr><th>Invoice No.</th><th>Date</th><th>Customer</th><th>Ship</th><th>Taxable</th><th>GST</th><th>Grand Total</th><th>Paid</th><th>Pending</th><th>Status</th><th>Actions</th></tr></thead>
+    <tbody>{% for i in invoices %}<tr><td><a class="link-primary fw-semibold" href="{{ url_for('main.edit_invoice', invoice_id=i.id) }}">{{ i.invoice_number }}</a></td><td>{{ i.invoice_date|datefmt }}</td><td>{{ i.customer.customer_name }}</td><td>{{ i.customer.ship_name }}</td><td>{{ i.taxable_amount|money }}</td><td>{{ i.total_gst|money }}</td><td>{{ i.rounded_total|money }}</td><td>{{ i.paid_amount|money }}</td><td>{{ i.pending_amount|money }}</td><td><span class="badge text-bg-secondary">{{ i.payment_status }}</span></td><td class="actions"><a class="btn btn-sm btn-outline-primary" target="_blank" href="{{ url_for('main.document_pdf', kind='invoice', doc_id=i.id, preview=1) }}">Preview</a><a class="btn btn-sm btn-outline-primary" href="{{ url_for('main.document_pdf', kind='invoice', doc_id=i.id) }}">Download</a><a class="btn btn-sm btn-outline-secondary" href="{{ url_for('main.edit_invoice', invoice_id=i.id) }}">Edit</a><form class="d-inline" method="post" action="{{ url_for('main.delete_invoice', invoice_id=i.id) }}" onsubmit="return confirm('Delete invoice {{ i.invoice_number }}?');"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-sm btn-outline-danger">Delete</button></form></td></tr>{% endfor %}</tbody>
+  </table></div>
+</section>
+{% endblock %}

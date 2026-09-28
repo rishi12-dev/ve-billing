@@ -1,0 +1,19 @@
+<div class="nav-panel">
+  <a href="{{ url_for('main.dashboard') }}">Dashboard</a>
+  <a href="{{ url_for('main.quotations') }}">All Quotations</a>
+  <a href="{{ url_for('main.new_quotation') }}">New Quotation</a>
+  <a href="{{ url_for('main.invoices') }}">All Invoices</a>
+  <a href="{{ url_for('main.new_invoice') }}">New Invoice</a>
+  <a href="{{ url_for('main.supporting_quotations') }}">Supporting Quotations</a>
+  <a href="{{ url_for('main.customers') }}">Customers</a>
+  <a href="{{ url_for('main.payments') }}">Payments</a>
+  <a href="{{ url_for('main.reports') }}">Reports</a>
+  <a href="{{ url_for('main.gst_summary') }}">GST Summary</a>
+  {% if is_admin %}
+  <div class="nav-section">Settings</div>
+  <a href="{{ url_for('main.company_settings') }}">Company</a>
+  <a href="{{ url_for('main.invoice_number_settings') }}">Invoice Number</a>
+  <a href="{{ url_for('main.users') }}">Users</a>
+  <a href="{{ url_for('main.backup') }}">Backup</a>
+  {% endif %}
+</div>

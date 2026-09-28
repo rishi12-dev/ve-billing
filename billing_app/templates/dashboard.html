@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Dashboard</h1>
+    <p>{{ start|datefmt }} to {{ end|datefmt }}</p>
+  </div>
+  <form class="filter-bar" method="get">
+    <select class="form-select" name="range" onchange="this.form.submit()">
+      {% for value,label in [('today','Today'),('week','This Week'),('month','This Month'),('quarter','This Quarter'),('fy','Financial Year'),('custom','Custom')] %}
+      <option value="{{ value }}" {% if preset == value %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+    <input class="form-control" type="date" name="start" value="{{ start }}">
+    <input class="form-control" type="date" name="end" value="{{ end }}">
+    <button class="btn btn-primary">Apply</button>
+  </form>
+</div>
+<div class="metric-grid">
+  <div class="metric"><span>Total Sales</span><strong>{{ cards.total_sales|money }}</strong></div>
+  <div class="metric"><span>Taxable Sales</span><strong>{{ cards.taxable_sales|money }}</strong></div>
+  <div class="metric"><span>Total GST</span><strong>{{ cards.total_gst|money }}</strong></div>
+  <div class="metric"><span>Invoice Value</span><strong>{{ cards.total_sales|money }}</strong></div>
+  <div class="metric"><span>Received</span><strong>{{ cards.received|money }}</strong></div>
+  <div class="metric"><span>Pending</span><strong>{{ cards.pending|money }}</strong></div>
+  <div class="metric"><span>Paid Invoices</span><strong>{{ cards.paid_count }}</strong></div>
+  <div class="metric"><span>Pending Invoices</span><strong>{{ cards.pending_count }}</strong></div>
+  <div class="metric"><span>Quotations</span><strong>{{ cards.quotation_count }}</strong></div>
+  <div class="metric"><span>Quotation Value</span><strong>{{ cards.quotation_value|money }}</strong></div>
+  <div class="metric"><span>Accepted</span><strong>{{ cards.accepted_quotations }}</strong></div>
+  <div class="metric"><span>Cancelled</span><strong>{{ cards.cancelled_count }}</strong></div>
+</div>
+<section class="panel">
+  <h2>Monthly Sales & GST</h2>
+  <canvas id="salesChart" height="110"></canvas>
+</section>
+{% endblock %}
+{% block scripts %}
+<script>
+window.chartRows = {{ monthly_rows|tojson }};
+</script>
+{% endblock %}

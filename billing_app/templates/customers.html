@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head"><h1>Customers / Ships</h1></div>
+<section class="panel">
+  <form class="grid-form" method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    {% for name,label in [('customer_name','Customer Name'),('company_name','Company Name'),('ship_name','Ship Name'),('city','City'),('state','State'),('pin','PIN'),('gstin','GSTIN'),('contact_person','Contact Person'),('phone','Phone'),('email','Email')] %}
+    <div><label class="form-label">{{ label }}</label><input class="form-control" name="{{ name }}" {% if name == 'customer_name' %}required{% endif %}></div>
+    {% endfor %}
+    <div class="wide"><label class="form-label">Address</label><textarea class="form-control" name="address"></textarea></div>
+    <div class="wide"><button class="btn btn-primary">Save Customer</button></div>
+  </form>
+</section>
+<section class="panel">
+  <form class="search-row"><input class="form-control" name="q" placeholder="Search customer, ship, GSTIN"><button class="btn btn-outline-primary">Search</button></form>
+  <div class="table-responsive"><table class="table align-middle">
+    <thead><tr><th>Customer</th><th>Company</th><th>Ship</th><th>GSTIN</th><th>Phone</th><th>Email</th></tr></thead>
+    <tbody>{% for c in customers %}<tr><td>{{ c.customer_name }}</td><td>{{ c.company_name }}</td><td>{{ c.ship_name }}</td><td>{{ c.gstin }}</td><td>{{ c.phone }}</td><td>{{ c.email }}</td></tr>{% endfor %}</tbody>
+  </table></div>
+</section>
+{% endblock %}

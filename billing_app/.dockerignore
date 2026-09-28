@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+.git/
+database/*.db
+generated_pdfs/*.pdf
+backups/*
+uploads/*
+firepit-log.txt
+firebase-debug.log

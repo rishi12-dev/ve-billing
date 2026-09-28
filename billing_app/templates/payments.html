@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head"><h1>Payments</h1></div>
+<section class="panel">
+  <form class="grid-form" method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="wide"><label class="form-label">Invoice</label><select class="form-select" name="invoice_id">{% for i in invoices %}<option value="{{ i.id }}">{{ i.invoice_number }} - Pending {{ i.pending_amount|money }}</option>{% endfor %}</select></div>
+    <div><label class="form-label">Amount Received</label><input class="form-control" type="number" name="amount_received" min="1" required></div>
+    <div><label class="form-label">Payment Date</label><input class="form-control" type="date" name="payment_date" value="{{ today }}" required></div>
+    <div><label class="form-label">Payment Mode</label><select class="form-select" name="payment_mode"><option>Cash</option><option>Bank Transfer</option><option>UPI</option><option>Cheque</option><option>Other</option></select></div>
+    <div><label class="form-label">Transaction Reference</label><input class="form-control" name="transaction_ref"></div>
+    <div class="wide"><label class="form-label">Notes</label><textarea class="form-control" name="notes"></textarea></div>
+    <div class="wide"><button class="btn btn-primary">Record Payment</button></div>
+  </form>
+</section>
+<section class="panel">
+  <a class="btn btn-outline-secondary mb-3" href="{{ url_for('main.export', dataset='payments') }}">Export Excel</a>
+  <div class="table-responsive"><table class="table"><thead><tr><th>Invoice</th><th>Date</th><th>Amount</th><th>Mode</th><th>Reference</th></tr></thead><tbody>{% for p in payments %}<tr><td>{{ p.invoice.invoice_number }}</td><td>{{ p.payment_date|datefmt }}</td><td>{{ p.amount_received|money }}</td><td>{{ p.payment_mode }}</td><td>{{ p.transaction_ref }}</td></tr>{% endfor %}</tbody></table></div>
+</section>
+{% endblock %}

@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head"><h1>Invoice Number Settings</h1></div>
+<section class="panel">
+  <form class="grid-form" method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div><label class="form-label">Prefix</label><input class="form-control" name="prefix" value="{{ setting.prefix }}"></div>
+    <div><label class="form-label">Next Number</label><input class="form-control" name="next_number" type="number" value="{{ setting.next_number }}"></div>
+    <div><label class="form-label">Padding</label><input class="form-control" name="padding" type="number" value="{{ setting.padding }}"></div>
+    <div class="wide"><button class="btn btn-primary">Save Number Format</button></div>
+  </form>
+</section>
+<section class="panel"><h2>Recent Number History</h2><div class="table-responsive"><table class="table"><thead><tr><th>Invoice Number</th><th>Generated At</th></tr></thead><tbody>{% for h in history %}<tr><td>{{ h.invoice_number }}</td><td>{{ h.created_at }}</td></tr>{% endfor %}</tbody></table></div></section>
+{% endblock %}

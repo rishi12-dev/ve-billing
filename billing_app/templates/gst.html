@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head"><h1>GST Summary</h1></div>
+<section class="panel">
+  <div class="table-responsive"><table class="table"><thead><tr><th>GST Rate</th><th>Taxable</th><th>CGST</th><th>SGST</th><th>IGST</th><th>Total GST</th></tr></thead><tbody>{% for rate,row in rows.items() %}<tr><td>{{ rate|replace('.00','') }}%</td><td>{{ row.taxable|money }}</td><td>{{ row.cgst|money }}</td><td>{{ row.sgst|money }}</td><td>{{ row.igst|money }}</td><td>{{ row.total|money }}</td></tr>{% endfor %}</tbody></table></div>
+</section>
+<section class="panel">
+  <h2>GST Paid / Remitted Reconciliation</h2>
+  <form class="grid-form" method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div><label class="form-label">Return Period</label><input class="form-control" name="return_period" placeholder="2026-04" required></div>
+    <div><label class="form-label">GST Liability</label><input class="form-control" name="gst_liability" type="number" step="0.01"></div>
+    <div><label class="form-label">GST Paid</label><input class="form-control" name="gst_paid" type="number" step="0.01"></div>
+    <div><label class="form-label">Payment Date</label><input class="form-control" name="payment_date" type="date"></div>
+    <div class="wide"><label class="form-label">Notes</label><textarea class="form-control" name="notes"></textarea></div>
+    <div class="wide"><button class="btn btn-primary">Save Reconciliation</button></div>
+  </form>
+  <div class="table-responsive mt-3"><table class="table"><thead><tr><th>Period</th><th>Liability</th><th>Paid</th><th>Balance</th><th>Date</th></tr></thead><tbody>{% for r in records %}<tr><td>{{ r.return_period }}</td><td>{{ r.gst_liability|money }}</td><td>{{ r.gst_paid|money }}</td><td>{{ (r.gst_liability - r.gst_paid)|money }}</td><td>{{ r.payment_date|datefmt }}</td></tr>{% endfor %}</tbody></table></div>
+</section>
+{% endblock %}

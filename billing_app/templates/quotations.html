@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head"><h1>Quotations</h1><a class="btn btn-primary" href="{{ url_for('main.new_quotation') }}">New Quotation</a></div>
+<section class="panel">
+  <form class="search-row"><input class="form-control" name="q" placeholder="Quotation, customer, ship, subject"><button class="btn btn-outline-primary">Search</button><a class="btn btn-outline-secondary" href="{{ url_for('main.export', dataset='quotations') }}">Export Excel</a></form>
+  <div class="table-responsive"><table class="table align-middle">
+    <thead><tr><th>Quotation No.</th><th>Date</th><th>Customer</th><th>Subject</th><th>Amount</th><th>Status</th><th>Actions</th></tr></thead>
+    <tbody>{% for q in quotations %}<tr><td><a class="link-primary fw-semibold" href="{{ url_for('main.edit_quotation', quotation_id=q.id) }}">{{ q.quotation_number }}</a></td><td>{{ q.date|datefmt }}</td><td>{{ q.customer.customer_name }}</td><td>{{ q.subject }}</td><td>{{ q.rounded_total|money }}</td><td><span class="badge text-bg-secondary">{{ q.status }}</span></td><td class="actions"><a class="btn btn-sm btn-outline-primary" target="_blank" href="{{ url_for('main.document_pdf', kind='quotation', doc_id=q.id, preview=1) }}">Preview</a><a class="btn btn-sm btn-outline-primary" href="{{ url_for('main.document_pdf', kind='quotation', doc_id=q.id) }}">Download</a><a class="btn btn-sm btn-outline-secondary" href="{{ url_for('main.edit_quotation', quotation_id=q.id) }}">Edit</a><a class="btn btn-sm btn-success" href="{{ url_for('main.convert_quotation', quotation_id=q.id) }}">Convert to Invoice</a></td></tr>{% endfor %}</tbody>
+  </table></div>
+</section>
+{% endblock %}

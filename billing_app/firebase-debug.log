@@ -1,0 +1,56 @@
+[debug] [2026-09-23T16:43:30.606Z] ----------------------------------------------------------------------
+[debug] [2026-09-23T16:43:30.609Z] Command:       /usr/local/bin/firebase /Users/rishigoutham/.cache/firebase/tools/lib/node_modules/firebase-tools/lib/bin/firebase projects:list
+[debug] [2026-09-23T16:43:30.610Z] CLI Version:   14.19.1
+[debug] [2026-09-23T16:43:30.610Z] Platform:      darwin
+[debug] [2026-09-23T16:43:30.610Z] Node Version:  v20.18.2
+[debug] [2026-09-23T16:43:30.610Z] Time:          Wed Sep 23 2026 22:13:30 GMT+0530 (India Standard Time)
+[debug] [2026-09-23T16:43:30.611Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-09-23T16:43:30.613Z] >>> [apiv2][query] GET https://firebase-public.firebaseio.com/cli.json [none]
+[debug] [2026-09-23T16:43:30.660Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-09-23T16:43:30.662Z] > authorizing via signed-in user (rishigouthan9@gmail.com)
+[debug] [2026-09-23T16:43:30.665Z] Checked if tokens are valid: false, expires at: 1776272238861
+[debug] [2026-09-23T16:43:30.665Z] Checked if tokens are valid: false, expires at: 1776272238861
+[debug] [2026-09-23T16:43:30.665Z] > refreshing access token with scopes: []
+[debug] [2026-09-23T16:43:30.667Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-09-23T16:43:30.668Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-09-23T16:43:30.845Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2026-09-23T16:43:30.846Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-09-23T16:43:30.857Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects pageSize=1000
+[debug] [2026-09-23T16:43:31.316Z] <<< [apiv2][status] GET https://firebase-public.firebaseio.com/cli.json 200
+[debug] [2026-09-23T16:43:31.318Z] <<< [apiv2][body] GET https://firebase-public.firebaseio.com/cli.json {"cloudBuildErrorAfter":1594252800000,"cloudBuildWarnAfter":1590019200000,"defaultNode10After":1594252800000,"minVersion":"3.0.5","node8DeploysDisabledAfter":1613390400000,"node8RuntimeDisabledAfter":1615809600000,"node8WarnAfter":1600128000000}
+[debug] [2026-09-23T16:43:31.776Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects 200
+[debug] [2026-09-23T16:47:08.246Z] ----------------------------------------------------------------------
+[debug] [2026-09-23T16:47:08.254Z] Command:       /usr/local/bin/firebase /Users/rishigoutham/.cache/firebase/tools/lib/node_modules/firebase-tools/lib/bin/firebase projects:list
+[debug] [2026-09-23T16:47:08.255Z] CLI Version:   14.19.1
+[debug] [2026-09-23T16:47:08.255Z] Platform:      darwin
+[debug] [2026-09-23T16:47:08.255Z] Node Version:  v20.18.2
+[debug] [2026-09-23T16:47:08.255Z] Time:          Wed Sep 23 2026 22:17:08 GMT+0530 (India Standard Time)
+[debug] [2026-09-23T16:47:08.256Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-09-23T16:47:08.424Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-09-23T16:47:08.426Z] > authorizing via signed-in user (rishigouthan9@gmail.com)
+[debug] [2026-09-23T16:47:08.431Z] Checked if tokens are valid: true, expires at: 1790185409846
+[debug] [2026-09-23T16:47:08.432Z] Checked if tokens are valid: true, expires at: 1790185409846
+[debug] [2026-09-23T16:47:08.434Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects pageSize=1000
+[debug] [2026-09-23T16:47:09.363Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects 200
+[debug] [2026-09-23T16:53:04.937Z] ----------------------------------------------------------------------
+[debug] [2026-09-23T16:53:04.945Z] Command:       /usr/local/bin/firebase /Users/rishigoutham/.cache/firebase/tools/lib/node_modules/firebase-tools/lib/bin/firebase use ve-billings
+[debug] [2026-09-23T16:53:04.945Z] CLI Version:   14.19.1
+[debug] [2026-09-23T16:53:04.945Z] Platform:      darwin
+[debug] [2026-09-23T16:53:04.945Z] Node Version:  v20.18.2
+[debug] [2026-09-23T16:53:04.946Z] Time:          Wed Sep 23 2026 22:23:04 GMT+0530 (India Standard Time)
+[debug] [2026-09-23T16:53:04.946Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-09-23T16:53:05.119Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-09-23T16:53:05.121Z] > authorizing via signed-in user (rishigouthan9@gmail.com)
+[debug] [2026-09-23T16:53:05.124Z] Checked if tokens are valid: true, expires at: 1790185409846
+[debug] [2026-09-23T16:53:05.125Z] Checked if tokens are valid: true, expires at: 1790185409846
+[debug] [2026-09-23T16:53:05.126Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/ve-billings/services/cloudresourcemanager.googleapis.com [none]
+[debug] [2026-09-23T16:53:05.127Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/ve-billings/services/cloudresourcemanager.googleapis.com x-goog-quota-user=projects/ve-billings
+[debug] [2026-09-23T16:53:07.027Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/ve-billings/services/cloudresourcemanager.googleapis.com 200
+[debug] [2026-09-23T16:53:07.028Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/ve-billings/services/cloudresourcemanager.googleapis.com [omitted]
+[debug] [2026-09-23T16:53:07.036Z] Checked if tokens are valid: true, expires at: 1790185409846
+[debug] [2026-09-23T16:53:07.036Z] Checked if tokens are valid: true, expires at: 1790185409846
+[debug] [2026-09-23T16:53:07.037Z] >>> [apiv2][query] GET https://cloudresourcemanager.googleapis.com/v1/projects/ve-billings [none]
+[debug] [2026-09-23T16:53:08.383Z] <<< [apiv2][status] GET https://cloudresourcemanager.googleapis.com/v1/projects/ve-billings 200
