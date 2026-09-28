@@ -56,9 +56,15 @@ function setTheme(theme, save = true) {
 }
 
 // ==========================================================================
-// PWA Installation Flow
+// PWA Installation & App Mode Check
 // ==========================================================================
 let deferredInstallPrompt = null;
+
+function isRunningInApp() {
+  return window.matchMedia('(display-mode: standalone)').matches || 
+         window.navigator.standalone === true || 
+         document.referrer.includes('android-app://');
+}
 
 window.addEventListener("beforeinstallprompt", (e) => {
   e.preventDefault();
@@ -86,12 +92,12 @@ function triggerInstall() {
 
 // ==========================================================================
 // Biometric (Fingerprint / Face ID / Touch ID) Authentication Flow
+// (Only active in Downloaded / Installed App)
 // ==========================================================================
 async function setupBiometric() {
   try {
     const credId = "ve_bio_" + Math.random().toString(36).substring(2) + Date.now();
     
-    // Check if WebAuthn is available
     if (window.PublicKeyCredential) {
       const challenge = new Uint8Array(32);
       window.crypto.getRandomValues(challenge);
@@ -126,7 +132,6 @@ async function setupBiometric() {
       }
     }
 
-    // Fallback device signature registration
     await saveBiometricCredential(credId);
   } catch (err) {
     alert("Biometric setup failed: " + err.message);
@@ -143,7 +148,7 @@ async function saveBiometricCredential(credId) {
   const data = await res.json();
   if (data.success) {
     localStorage.setItem("ve_bio_credential", credId);
-    alert("✅ Fingerprint / Face ID login has been enabled on this device!");
+    alert("✅ Fingerprint / Face ID login enabled for this installed app!");
     const prompt = document.getElementById("biometricSetupPrompt");
     if (prompt) prompt.style.display = "none";
   } else {
@@ -152,9 +157,16 @@ async function saveBiometricCredential(credId) {
 }
 
 async function loginBiometric() {
+  const inApp = isRunningInApp();
   const savedCred = localStorage.getItem("ve_bio_credential");
+
+  if (!inApp) {
+    alert("📱 Note: Fingerprint Login sirf App install/download karne ke baad chalta hai.\nKripya pehle browser menu se 'Install App' ya 'Add to Home screen' karein.");
+    return;
+  }
+
   if (!savedCred) {
-    alert("Biometric login is not setup on this device yet.\nPlease log in with your password first and click 'Enable Fingerprint Login' on the dashboard.");
+    alert("Biometric login is not setup yet.\nPehele password se login karein aur dashboard par 'Enable Fingerprint Login' par click karein.");
     return;
   }
 
@@ -200,16 +212,26 @@ document.addEventListener("DOMContentLoaded", () => {
     btn.addEventListener("click", triggerInstall);
   });
 
+  const inApp = isRunningInApp();
   const enableBioBtn = document.getElementById("enableBiometricBtn");
   if (enableBioBtn) enableBioBtn.addEventListener("click", setupBiometric);
 
   const bioPrompt = document.getElementById("biometricSetupPrompt");
-  if (bioPrompt && !localStorage.getItem("ve_bio_credential")) {
-    bioPrompt.style.display = "flex";
+  if (bioPrompt) {
+    if (inApp && !localStorage.getItem("ve_bio_credential")) {
+      bioPrompt.style.display = "flex";
+    } else {
+      bioPrompt.style.display = "none";
+    }
   }
 
   const bioLoginBtn = document.getElementById("biometricLoginBtn");
-  if (bioLoginBtn) bioLoginBtn.addEventListener("click", loginBiometric);
+  if (bioLoginBtn) {
+    bioLoginBtn.addEventListener("click", loginBiometric);
+    if (!inApp) {
+      bioLoginBtn.title = "Available after adding to Home Screen / Installing App";
+    }
+  }
 });
 
 // ==========================================================================
@@ -279,8 +301,43 @@ function updateChartTheme() {
 }
 
 // ==========================================================================
-// Customer Autocomplete & Item Rows
+// Customer Autocomplete & Live Document Calculations
 // ==========================================================================
+function calculateLiveTotals() {
+  const rows = document.querySelectorAll(".item-card-row, .item-row");
+  let totalTaxable = 0;
+  let totalGST = 0;
+
+  rows.forEach(row => {
+    const qty = parseFloat(row.querySelector(".item-qty, input[name='quantity[]']")?.value) || 0;
+    const rate = parseFloat(row.querySelector(".item-rate, input[name='rate[]']")?.value) || 0;
+    const disc = parseFloat(row.querySelector(".item-disc, input[name='discount[]']")?.value) || 0;
+    const gstRate = parseFloat(row.querySelector(".item-gst, select[name='gst_rate[]']")?.value) || 0;
+
+    const base = Math.max(0, (qty * rate) - disc);
+    const gst = base * (gstRate / 100);
+    const lineTotal = base + gst;
+
+    const lineTotalEl = row.querySelector(".item-line-total");
+    if (lineTotalEl) {
+      lineTotalEl.textContent = "₹" + lineTotal.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    totalTaxable += base;
+    totalGST += gst;
+  });
+
+  const grandTotal = totalTaxable + totalGST;
+
+  const liveTaxable = document.getElementById("liveTaxable");
+  const liveGST = document.getElementById("liveGST");
+  const liveGrandTotal = document.getElementById("liveGrandTotal");
+
+  if (liveTaxable) liveTaxable.textContent = "₹" + totalTaxable.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  if (liveGST) liveGST.textContent = "₹" + totalGST.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  if (liveGrandTotal) liveGrandTotal.textContent = "₹" + grandTotal.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   renderChart();
 
@@ -315,17 +372,24 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const itemRows = document.getElementById("itemRows");
   const addItemRow = document.getElementById("addItemRow");
-  if (itemRows && addItemRow) {
+  const addItemRowBottom = document.getElementById("addItemRowBottom");
+
+  if (itemRows) {
     const refreshItemRows = () => {
-      itemRows.querySelectorAll(".item-row").forEach((row, index) => {
-        row.querySelector(".row-number").textContent = index + 1;
+      const allRows = itemRows.querySelectorAll(".item-card-row, .item-row");
+      allRows.forEach((row, index) => {
+        const badge = row.querySelector(".row-badge");
+        if (badge) badge.textContent = `Item #${index + 1}`;
+        const num = row.querySelector(".row-number");
+        if (num) num.textContent = index + 1;
         const remove = row.querySelector(".remove-item-row");
-        if (remove) remove.disabled = itemRows.querySelectorAll(".item-row").length === 1;
+        if (remove) remove.disabled = allRows.length === 1;
       });
+      calculateLiveTotals();
     };
 
-    const blankRow = () => {
-      const first = itemRows.querySelector(".item-row");
+    const blankCard = () => {
+      const first = itemRows.querySelector(".item-card-row, .item-row");
       const clone = first.cloneNode(true);
       clone.querySelectorAll("input, textarea").forEach(input => {
         if (input.name === "quantity[]") input.value = "1";
@@ -337,16 +401,24 @@ document.addEventListener("DOMContentLoaded", () => {
       return clone;
     };
 
-    addItemRow.addEventListener("click", () => {
-      itemRows.appendChild(blankRow());
+    const handleAdd = () => {
+      itemRows.appendChild(blankCard());
       refreshItemRows();
-    });
+    };
+
+    if (addItemRow) addItemRow.addEventListener("click", handleAdd);
+    if (addItemRowBottom) addItemRowBottom.addEventListener("click", handleAdd);
 
     itemRows.addEventListener("click", event => {
       if (!event.target.classList.contains("remove-item-row")) return;
-      if (itemRows.querySelectorAll(".item-row").length === 1) return;
-      event.target.closest(".item-row").remove();
+      const allRows = itemRows.querySelectorAll(".item-card-row, .item-row");
+      if (allRows.length === 1) return;
+      event.target.closest(".item-card-row, .item-row").remove();
       refreshItemRows();
+    });
+
+    itemRows.addEventListener("input", () => {
+      calculateLiveTotals();
     });
 
     refreshItemRows();

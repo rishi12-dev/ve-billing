@@ -3,63 +3,236 @@
 {% set line = item if item is defined and item else None %}
 {% set lines = doc.items if doc and doc.items else [line] %}
 {% block content %}
-<div class="page-head"><h1>{{ 'Edit' if mode == 'edit' else 'New' }} {{ kind }}</h1></div>
-<section class="panel">
-  <form class="grid-form" method="post">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <div><label class="form-label">{{ kind }} Number</label><input class="form-control" name="{{ 'invoice_number' if kind == 'Invoice' else 'quotation_number' }}" value="{{ number }}" {% if mode == 'edit' %}readonly{% endif %} required></div>
-    <div><label class="form-label">Date</label><input class="form-control" type="date" name="date" value="{{ doc.invoice_date if doc and kind == 'Invoice' else doc.date if doc else today }}" required></div>
-    <div class="wide">
-      <label class="form-label">Customer / Ship</label>
-      <input type="hidden" name="customer_id" id="customer_id" value="{{ doc.customer.id if doc else '' }}">
-      <input class="form-control customer-picker" name="customer_name" list="saved_customers" placeholder="Type customer name or choose saved customer" value="{{ doc.customer.customer_name if doc else '' }}" required autocomplete="off">
-      <datalist id="saved_customers">
-        {% for c in customers %}
-        <option value="{{ c.customer_name }}" data-id="{{ c.id }}" data-company="{{ c.company_name }}" data-ship="{{ c.ship_name }}" data-gstin="{{ c.gstin }}" data-phone="{{ c.phone }}" data-email="{{ c.email }}" data-address="{{ c.address }}"></option>
-        {% endfor %}
-      </datalist>
-    </div>
-    <div><label class="form-label">Company</label><input class="form-control" name="customer_company" id="customer_company" value="{{ doc.customer.company_name if doc else '' }}" placeholder="Auto-filled or new"></div>
-    <div><label class="form-label">Ship Name</label><input class="form-control" name="customer_ship" id="customer_ship" value="{{ doc.customer.ship_name if doc else '' }}" placeholder="Optional"></div>
-    <div><label class="form-label">GSTIN</label><input class="form-control" name="customer_gstin" id="customer_gstin" value="{{ doc.customer.gstin if doc else '' }}" placeholder="Optional"></div>
-    <div><label class="form-label">Phone</label><input class="form-control" name="customer_phone" id="customer_phone" value="{{ doc.customer.phone if doc else '' }}" placeholder="Optional"></div>
-    <div><label class="form-label">Email</label><input class="form-control" name="customer_email" id="customer_email" value="{{ doc.customer.email if doc else '' }}" placeholder="Optional"></div>
-    <div class="wide"><label class="form-label">Customer Address</label><textarea class="form-control" name="customer_address" id="customer_address" placeholder="Optional">{{ doc.customer.address if doc else '' }}</textarea></div>
-    <div class="wide"><label class="form-label">Subject</label><input class="form-control" name="subject" value="{{ doc.subject if doc else '' }}"></div>
-    <div class="wide item-editor">
-      <div class="item-editor-head">
-        <label class="form-label mb-0">Items Description</label>
-        <button class="btn btn-sm btn-outline-primary" type="button" id="addItemRow">Add Row</button>
-      </div>
-      <div class="table-responsive">
-        <table class="table item-table align-middle">
-          <thead><tr><th>S.No.</th><th>Description</th><th>HSN</th><th>Qty</th><th>Unit</th><th>Rate</th><th>Discount</th><th>GST %</th><th></th></tr></thead>
-          <tbody id="itemRows">
-            {% for row in lines %}
-            <tr class="item-row">
-              <td class="row-number">{{ loop.index }}</td>
-              <td><textarea class="form-control" name="description[]" required>{{ row.description if row else '' }}</textarea></td>
-              <td><input class="form-control" name="hsn_code[]" value="{{ row.hsn_code if row else '' }}"></td>
-              <td><input class="form-control" name="quantity[]" type="number" step="0.01" value="{{ row.quantity if row else '1' }}" min="0" required></td>
-              <td><input class="form-control" name="unit[]" value="{{ row.unit if row else 'Nos' }}"></td>
-              <td><input class="form-control" name="rate[]" type="number" step="0.01" value="{{ row.rate if row else '0' }}" min="0" required></td>
-              <td><input class="form-control" name="discount[]" type="number" step="0.01" value="{{ row.discount if row else '0' }}" min="0"></td>
-              <td><select class="form-select" name="gst_rate[]">{% for r in [0,5,12,18,28] %}<option {% if row and row.gst_rate|int == r %}selected{% endif %}>{{ r }}</option>{% endfor %}</select></td>
-              <td><button class="btn btn-sm btn-outline-danger remove-item-row" type="button">Remove</button></td>
-            </tr>
+<div class="page-head">
+  <div>
+    <h1 class="h3 fw-bold mb-1">{{ 'Edit' if mode == 'edit' else 'Create' }} {{ kind }}</h1>
+    <p class="text-muted small mb-0">{{ kind }} details and itemized pricing</p>
+  </div>
+  <a href="{{ url_for('main.invoices' if kind == 'Invoice' else 'main.quotations') }}" class="btn btn-sm btn-outline-secondary">← Back to List</a>
+</div>
+
+<form id="documentForm" method="post" class="needs-validation">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+  <div class="row g-3 mb-4">
+    <!-- Left Column: Document & Customer Info -->
+    <div class="col-12 col-lg-6">
+      <div class="panel h-100">
+        <h2 class="h5 fw-bold mb-3 d-flex align-items-center gap-2">
+          <span>📄</span> <span>Document Information</span>
+        </h2>
+        
+        <div class="row g-2 mb-3">
+          <div class="col-6">
+            <label class="form-label small fw-semibold">{{ kind }} Number</label>
+            <input class="form-control fw-bold" name="{{ 'invoice_number' if kind == 'Invoice' else 'quotation_number' }}" value="{{ number }}" {% if mode == 'edit' %}readonly{% endif %} required>
+          </div>
+          <div class="col-6">
+            <label class="form-label small fw-semibold">Date</label>
+            <input class="form-control" type="date" name="date" value="{{ doc.invoice_date if doc and kind == 'Invoice' else doc.date if doc else today }}" required>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label small fw-semibold">Subject / Title</label>
+          <input class="form-control" name="subject" value="{{ doc.subject if doc else '' }}" placeholder="e.g. Supply and Installation of Machinery Parts">
+        </div>
+
+        {% if kind == "Invoice" %}
+        <div class="mb-2">
+          <label class="form-label small fw-semibold">Payment Status</label>
+          <select class="form-select" name="payment_status">
+            {% for status in ['Pending','Partially Paid','Paid','Cancelled'] %}
+            <option {% if doc and doc.payment_status == status %}selected{% endif %}>{{ status }}</option>
             {% endfor %}
-          </tbody>
-        </table>
+          </select>
+        </div>
+        {% else %}
+        <div class="mb-2">
+          <label class="form-label small fw-semibold">Quotation Status</label>
+          <select class="form-select" name="status">
+            {% for status in ['Draft','Sent','Accepted','Rejected','Converted to Invoice'] %}
+            <option {% if doc and doc.status == status %}selected{% endif %}>{{ status }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        {% endif %}
       </div>
     </div>
-    {% if kind == "Invoice" %}
-    <div><label class="form-label">Payment Status</label><select class="form-select" name="payment_status">{% for status in ['Pending','Partially Paid','Paid','Cancelled'] %}<option {% if doc and doc.payment_status == status %}selected{% endif %}>{{ status }}</option>{% endfor %}</select></div>
-    {% else %}
-    <div><label class="form-label">Status</label><select class="form-select" name="status">{% for status in ['Draft','Sent','Accepted','Rejected','Converted to Invoice'] %}<option {% if doc and doc.status == status %}selected{% endif %}>{{ status }}</option>{% endfor %}</select></div>
-    <div class="wide"><label class="form-label">Notes</label><textarea class="form-control" name="notes">{{ doc.notes if doc else '' }}</textarea></div>
-    <div class="wide"><label class="form-label">Terms & Conditions</label><textarea class="form-control" name="terms">{{ doc.terms if doc else default_terms|default('') }}</textarea></div>
-    {% endif %}
-    <div class="wide"><button class="btn btn-primary">{{ 'Update' if mode == 'edit' else 'Save' }} {{ kind }}</button></div>
-  </form>
-</section>
+
+    <!-- Right Column: Customer Details -->
+    <div class="col-12 col-lg-6">
+      <div class="panel h-100">
+        <h2 class="h5 fw-bold mb-3 d-flex align-items-center gap-2">
+          <span>👤</span> <span>Customer Details</span>
+        </h2>
+
+        <div class="mb-2 position-relative">
+          <label class="form-label small fw-semibold">Customer / Ship Name <span class="text-danger">*</span></label>
+          <input type="hidden" name="customer_id" id="customer_id" value="{{ doc.customer.id if doc else '' }}">
+          <input class="form-control customer-picker fw-semibold" name="customer_name" list="saved_customers" placeholder="🔍 Search or type customer name..." value="{{ doc.customer.customer_name if doc else '' }}" required autocomplete="off">
+          <datalist id="saved_customers">
+            {% for c in customers %}
+            <option value="{{ c.customer_name }}" data-id="{{ c.id }}" data-company="{{ c.company_name }}" data-ship="{{ c.ship_name }}" data-gstin="{{ c.gstin }}" data-phone="{{ c.phone }}" data-email="{{ c.email }}" data-address="{{ c.address }}"></option>
+            {% endfor %}
+          </datalist>
+        </div>
+
+        <div class="row g-2 mb-2">
+          <div class="col-6">
+            <label class="form-label small">Company Name</label>
+            <input class="form-control form-control-sm" name="customer_company" id="customer_company" value="{{ doc.customer.company_name if doc else '' }}" placeholder="Auto-filled">
+          </div>
+          <div class="col-6">
+            <label class="form-label small">Ship Name</label>
+            <input class="form-control form-control-sm" name="customer_ship" id="customer_ship" value="{{ doc.customer.ship_name if doc else '' }}" placeholder="Optional">
+          </div>
+        </div>
+
+        <div class="row g-2 mb-2">
+          <div class="col-6">
+            <label class="form-label small">GSTIN</label>
+            <input class="form-control form-control-sm" name="customer_gstin" id="customer_gstin" value="{{ doc.customer.gstin if doc else '' }}" placeholder="GST Number">
+          </div>
+          <div class="col-6">
+            <label class="form-label small">Phone</label>
+            <input class="form-control form-control-sm" name="customer_phone" id="customer_phone" value="{{ doc.customer.phone if doc else '' }}" placeholder="Mobile No.">
+          </div>
+        </div>
+
+        <div class="mb-1">
+          <label class="form-label small">Customer Address</label>
+          <textarea class="form-control form-control-sm" rows="2" name="customer_address" id="customer_address" placeholder="Billing & Shipping Address">{{ doc.customer.address if doc else '' }}</textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Items Editor Section -->
+  <section class="panel mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+      <h2 class="h5 fw-bold mb-0 d-flex align-items-center gap-2">
+        <span>📦</span> <span>Items & Services</span>
+      </h2>
+      <button class="btn btn-sm btn-primary" type="button" id="addItemRow">➕ Add Item</button>
+    </div>
+
+    <!-- Responsive Desktop / Mobile Items Container -->
+    <div id="itemRows" class="item-list-wrap">
+      {% for row in lines %}
+      <div class="item-card-row mb-3 p-3 rounded-3 border bg-surface-subtle position-relative">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+          <span class="badge bg-secondary fw-bold row-badge">Item #{{ loop.index }}</span>
+          <button class="btn btn-sm btn-outline-danger p-1 px-2 remove-item-row" type="button" title="Remove Item">✕ Remove</button>
+        </div>
+
+        <div class="row g-2">
+          <!-- Description -->
+          <div class="col-12 col-md-6">
+            <label class="form-label small fw-semibold">Description of Goods / Service <span class="text-danger">*</span></label>
+            <textarea class="form-control item-calc-trigger" rows="2" name="description[]" placeholder="Item details, specifications..." required>{{ row.description if row else '' }}</textarea>
+          </div>
+
+          <!-- HSN -->
+          <div class="col-6 col-md-2">
+            <label class="form-label small fw-semibold">HSN/SAC</label>
+            <input class="form-control form-control-sm" name="hsn_code[]" value="{{ row.hsn_code if row else '' }}" placeholder="e.g. 8483">
+          </div>
+
+          <!-- Quantity -->
+          <div class="col-6 col-md-2">
+            <label class="form-label small fw-semibold">Quantity <span class="text-danger">*</span></label>
+            <input class="form-control form-control-sm item-qty item-calc-trigger" name="quantity[]" type="number" step="0.01" value="{{ row.quantity if row else '1' }}" min="0" required>
+          </div>
+
+          <!-- Unit -->
+          <div class="col-6 col-md-2">
+            <label class="form-label small fw-semibold">Unit</label>
+            <input class="form-control form-control-sm" name="unit[]" value="{{ row.unit if row else 'Nos' }}" placeholder="Nos, Set, Kg">
+          </div>
+
+          <!-- Rate -->
+          <div class="col-6 col-md-3">
+            <label class="form-label small fw-semibold">Rate (₹) <span class="text-danger">*</span></label>
+            <input class="form-control form-control-sm item-rate item-calc-trigger" name="rate[]" type="number" step="0.01" value="{{ row.rate if row else '0' }}" min="0" required>
+          </div>
+
+          <!-- Discount -->
+          <div class="col-6 col-md-3">
+            <label class="form-label small fw-semibold">Discount (₹)</label>
+            <input class="form-control form-control-sm item-disc item-calc-trigger" name="discount[]" type="number" step="0.01" value="{{ row.discount if row else '0' }}" min="0">
+          </div>
+
+          <!-- GST Rate -->
+          <div class="col-6 col-md-3">
+            <label class="form-label small fw-semibold">GST %</label>
+            <select class="form-select form-select-sm item-gst item-calc-trigger" name="gst_rate[]">
+              {% for r in [0,5,12,18,28] %}
+              <option value="{{ r }}" {% if row and row.gst_rate|int == r %}selected{% elif not row and r == 18 %}selected{% endif %}>{{ r }}%</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- Line Total Preview -->
+          <div class="col-6 col-md-3 text-end d-flex flex-column justify-content-end">
+            <small class="text-muted d-block" style="font-size: 11px;">Item Total (Incl. GST)</small>
+            <strong class="item-line-total text-primary" style="font-size: 16px;">₹0.00</strong>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <button class="btn btn-outline-primary w-100 py-2 mt-2 fw-semibold" type="button" id="addItemRowBottom">
+      ➕ Add Another Item
+    </button>
+  </section>
+
+  <!-- Live Calculation Summary Box -->
+  <div class="row g-3 mb-4">
+    <div class="col-12 col-lg-6">
+      <div class="panel h-100">
+        <h2 class="h5 fw-bold mb-3">Terms & Notes</h2>
+        {% if kind != "Invoice" %}
+        <div class="mb-3">
+          <label class="form-label small">Terms & Conditions</label>
+          <textarea class="form-control form-control-sm" rows="4" name="terms">{{ doc.terms if doc else default_terms|default('') }}</textarea>
+        </div>
+        {% endif %}
+        <div>
+          <label class="form-label small">Notes</label>
+          <textarea class="form-control form-control-sm" rows="3" name="notes" placeholder="Special instructions, delivery timeline, bank details...">{{ doc.notes if doc else '' }}</textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- Live Total Card -->
+    <div class="col-12 col-lg-6">
+      <div class="panel h-100 d-flex flex-column justify-content-between bg-surface-elevated border-2" style="border-color: var(--primary-teal) !important;">
+        <div>
+          <h2 class="h5 fw-bold mb-3 text-teal">Invoice Summary (Live)</h2>
+          
+          <div class="d-flex justify-content-between py-2 border-bottom">
+            <span class="text-muted">Taxable Amount:</span>
+            <strong id="liveTaxable">₹0.00</strong>
+          </div>
+          
+          <div class="d-flex justify-content-between py-2 border-bottom">
+            <span class="text-muted">Total GST:</span>
+            <strong id="liveGST">₹0.00</strong>
+          </div>
+
+          <div class="d-flex justify-content-between py-3">
+            <span class="h5 fw-bold mb-0">Grand Total:</span>
+            <span class="h4 fw-bold text-success mb-0" id="liveGrandTotal">₹0.00</span>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100 py-3 mt-3 fw-bold fs-6 shadow">
+          💾 {{ 'Update' if mode == 'edit' else 'Save & Generate' }} {{ kind }}
+        </button>
+      </div>
+    </div>
+  </div>
+</form>
 {% endblock %}
