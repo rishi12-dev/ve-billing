@@ -1,19 +1,19 @@
 <div class="nav-panel">
-  <a href="{{ url_for('main.dashboard') }}">Dashboard</a>
-  <a href="{{ url_for('main.quotations') }}">All Quotations</a>
-  <a href="{{ url_for('main.new_quotation') }}">New Quotation</a>
-  <a href="{{ url_for('main.invoices') }}">All Invoices</a>
-  <a href="{{ url_for('main.new_invoice') }}">New Invoice</a>
-  <a href="{{ url_for('main.supporting_quotations') }}">Supporting Quotations</a>
-  <a href="{{ url_for('main.customers') }}">Customers</a>
-  <a href="{{ url_for('main.payments') }}">Payments</a>
-  <a href="{{ url_for('main.reports') }}">Reports</a>
-  <a href="{{ url_for('main.gst_summary') }}">GST Summary</a>
+  <a href="{{ url_for('main.dashboard') }}"><span>📊</span> <span>Dashboard</span></a>
+  <a href="{{ url_for('main.quotations') }}"><span>📝</span> <span>All Quotations</span></a>
+  <a href="{{ url_for('main.new_quotation') }}"><span>➕</span> <span>New Quotation</span></a>
+  <a href="{{ url_for('main.invoices') }}"><span>🧾</span> <span>All Invoices</span></a>
+  <a href="{{ url_for('main.new_invoice') }}"><span>⚡</span> <span>New Invoice</span></a>
+  <a href="{{ url_for('main.supporting_quotations') }}"><span>📑</span> <span>Supporting Quotes</span></a>
+  <a href="{{ url_for('main.customers') }}"><span>👥</span> <span>Customers</span></a>
+  <a href="{{ url_for('main.payments') }}"><span>💳</span> <span>Payments</span></a>
+  <a href="{{ url_for('main.reports') }}"><span>📈</span> <span>Reports</span></a>
+  <a href="{{ url_for('main.gst_summary') }}"><span>🏛️</span> <span>GST Summary</span></a>
   {% if is_admin %}
-  <div class="nav-section">Settings</div>
-  <a href="{{ url_for('main.company_settings') }}">Company</a>
-  <a href="{{ url_for('main.invoice_number_settings') }}">Invoice Number</a>
-  <a href="{{ url_for('main.users') }}">Users</a>
-  <a href="{{ url_for('main.backup') }}">Backup</a>
+  <div class="nav-section">Settings & Admin</div>
+  <a href="{{ url_for('main.company_settings') }}"><span>🏢</span> <span>Company</span></a>
+  <a href="{{ url_for('main.invoice_number_settings') }}"><span>🔢</span> <span>Invoice Number</span></a>
+  <a href="{{ url_for('main.users') }}"><span>👤</span> <span>Users</span></a>
+  <a href="{{ url_for('main.backup') }}"><span>💾</span> <span>Database Backup</span></a>
   {% endif %}
 </div>
