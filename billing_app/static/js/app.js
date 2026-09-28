@@ -1,13 +1,24 @@
 // ==========================================================================
-// Service Worker Registration
+// Service Worker & Splash Screen Loading Flow
 // ==========================================================================
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
+window.addEventListener("load", () => {
+  if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("/service-worker.js").catch(err => {
       console.log("SW reg failed:", err);
     });
-  });
-}
+  }
+
+  // Smoothly fade out splash screen
+  const splash = document.getElementById("appSplashScreen");
+  if (splash) {
+    setTimeout(() => {
+      splash.classList.add("fade-out");
+      setTimeout(() => {
+        splash.remove();
+      }, 500);
+    }, 400);
+  }
+});
 
 // ==========================================================================
 // Dark / Light Theme System

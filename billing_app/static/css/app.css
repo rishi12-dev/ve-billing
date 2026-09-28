@@ -69,6 +69,111 @@ body {
 }
 
 /* ==========================================================================
+   App Splash / Launch Loading Screen
+   ========================================================================== */
+.app-splash-screen {
+  position: fixed;
+  inset: 0;
+  background-color: var(--bg-body);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+  transition: opacity 0.45s ease, visibility 0.45s ease;
+}
+
+.app-splash-screen.fade-out {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.splash-container {
+  text-align: center;
+  padding: 24px;
+}
+
+.splash-logo-wrap {
+  position: relative;
+  width: 110px;
+  height: 110px;
+  margin: 0 auto 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.splash-logo {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  animation: splashPulse 2s ease-in-out infinite;
+  z-index: 2;
+  position: relative;
+}
+
+.splash-glow {
+  position: absolute;
+  inset: -12px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--primary-teal-glow), transparent 70%);
+  animation: glowPulse 2s ease-in-out infinite;
+  z-index: 1;
+}
+
+.splash-title {
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  margin: 0 0 4px;
+  color: var(--text-primary);
+}
+
+.splash-subtitle {
+  font-size: 11px;
+  letter-spacing: 1.8px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  margin: 0 0 24px;
+}
+
+.splash-progress {
+  width: 170px;
+  height: 4px;
+  background: var(--border-color);
+  border-radius: 10px;
+  overflow: hidden;
+  margin: 0 auto;
+}
+
+.splash-progress-bar {
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(90deg, var(--primary-teal), #10b981);
+  border-radius: 10px;
+  animation: progressAnim 1.4s ease-in-out infinite;
+  transform-origin: left;
+}
+
+@keyframes splashPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.06); }
+}
+
+@keyframes glowPulse {
+  0%, 100% { transform: scale(1); opacity: 0.4; }
+  50% { transform: scale(1.25); opacity: 0.9; }
+}
+
+@keyframes progressAnim {
+  0% { transform: scaleX(0); }
+  50% { transform: scaleX(0.7); }
+  100% { transform: scaleX(1); }
+}
+
+/* ==========================================================================
    Header & Navigation
    ========================================================================== */
 

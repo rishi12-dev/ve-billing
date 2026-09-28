@@ -1,13 +1,15 @@
 {
-  "name": "VE-BILLING Vishwakarma",
+  "name": "VE-BILLING",
   "short_name": "VE-BILLING",
+  "id": "/",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#0b1120",
+  "background_color": "#090e17",
   "theme_color": "#0f766e",
-  "description": "Vishwakarma Enterprises Billing & Invoicing App",
+  "description": "Vishwakarma Enterprises Billing & Invoicing Management System",
+  "categories": ["business", "finance", "productivity"],
   "icons": [
     {
       "src": "/static/icons/icon-192.png",
