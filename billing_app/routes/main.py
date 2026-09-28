@@ -52,6 +52,14 @@ def inject_globals():
     return {"today": date.today(), "is_admin": current_user.is_authenticated and current_user.role == "admin"}
 
 
+@main_bp.before_request
+def enforce_login():
+    if request.endpoint in ["main.manifest", "main.service_worker"]:
+        return None
+    if not current_user.is_authenticated:
+        return redirect(url_for("auth.login"))
+
+
 def admin_required():
     if current_user.role != "admin":
         flash("Admin access required.", "warning")
@@ -253,13 +261,24 @@ def dashboard():
     monthly_rows = [
         [int(row[0]), int(row[1] or 0), int(row[2] or 0)]
         for row in (
-        db.session.query(extract("month", Invoice.invoice_date), func.sum(Invoice.rounded_total), func.sum(Invoice.total_gst))
-        .filter(extract("year", Invoice.invoice_date) == date.today().year)
-        .group_by(extract("month", Invoice.invoice_date))
-        .all()
+            db.session.query(extract("month", Invoice.invoice_date), func.sum(Invoice.rounded_total), func.sum(Invoice.total_gst))
+            .filter(extract("year", Invoice.invoice_date) == date.today().year)
+            .group_by(extract("month", Invoice.invoice_date))
+            .all()
         )
     ]
-    return render_template("dashboard.html", cards=cards, monthly_rows=monthly_rows, preset=preset, start=start, end=end)
+    recent_invoices = Invoice.query.order_by(Invoice.invoice_date.desc(), Invoice.id.desc()).limit(6).all()
+    recent_quotations = Quotation.query.order_by(Quotation.date.desc(), Quotation.id.desc()).limit(6).all()
+    return render_template(
+        "dashboard.html",
+        cards=cards,
+        recent_invoices=recent_invoices,
+        recent_quotations=recent_quotations,
+        monthly_rows=monthly_rows,
+        preset=preset,
+        start=start,
+        end=end,
+    )
 
 
 @main_bp.route("/customers", methods=["GET", "POST"])

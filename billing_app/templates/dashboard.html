@@ -2,39 +2,160 @@
 {% block content %}
 <div class="page-head">
   <div>
-    <h1>Dashboard</h1>
-    <p>{{ start|datefmt }} to {{ end|datefmt }}</p>
+    <h1 class="h3 fw-bold mb-1">Financial Dashboard</h1>
+    <p class="text-muted small mb-0">{{ start|datefmt }} to {{ end|datefmt }}</p>
   </div>
   <form class="filter-bar" method="get">
-    <select class="form-select" name="range" onchange="this.form.submit()">
-      {% for value,label in [('today','Today'),('week','This Week'),('month','This Month'),('quarter','This Quarter'),('fy','Financial Year'),('custom','Custom')] %}
+    <select class="form-select form-select-sm" name="range" onchange="this.form.submit()">
+      {% for value,label in [('today','Today'),('week','This Week'),('month','This Month'),('quarter','This Quarter'),('fy','Financial Year'),('custom','Custom Date')] %}
       <option value="{{ value }}" {% if preset == value %}selected{% endif %}>{{ label }}</option>
       {% endfor %}
     </select>
-    <input class="form-control" type="date" name="start" value="{{ start }}">
-    <input class="form-control" type="date" name="end" value="{{ end }}">
-    <button class="btn btn-primary">Apply</button>
+    {% if preset == 'custom' %}
+    <input class="form-control form-control-sm" type="date" name="start" value="{{ start }}">
+    <input class="form-control form-control-sm" type="date" name="end" value="{{ end }}">
+    <button class="btn btn-sm btn-primary">Apply</button>
+    {% endif %}
   </form>
 </div>
-<div class="metric-grid">
-  <div class="metric"><span>Total Sales</span><strong>{{ cards.total_sales|money }}</strong></div>
-  <div class="metric"><span>Taxable Sales</span><strong>{{ cards.taxable_sales|money }}</strong></div>
-  <div class="metric"><span>Total GST</span><strong>{{ cards.total_gst|money }}</strong></div>
-  <div class="metric"><span>Invoice Value</span><strong>{{ cards.total_sales|money }}</strong></div>
-  <div class="metric"><span>Received</span><strong>{{ cards.received|money }}</strong></div>
-  <div class="metric"><span>Pending</span><strong>{{ cards.pending|money }}</strong></div>
-  <div class="metric"><span>Paid Invoices</span><strong>{{ cards.paid_count }}</strong></div>
-  <div class="metric"><span>Pending Invoices</span><strong>{{ cards.pending_count }}</strong></div>
-  <div class="metric"><span>Quotations</span><strong>{{ cards.quotation_count }}</strong></div>
-  <div class="metric"><span>Quotation Value</span><strong>{{ cards.quotation_value|money }}</strong></div>
-  <div class="metric"><span>Accepted</span><strong>{{ cards.accepted_quotations }}</strong></div>
-  <div class="metric"><span>Cancelled</span><strong>{{ cards.cancelled_count }}</strong></div>
+
+<!-- Primary Key Performance Indicators (KPIs) -->
+<div class="row g-3 mb-4">
+  <!-- KPI 1: Total Revenue -->
+  <div class="col-6 col-lg-3">
+    <div class="kpi-card kpi-revenue">
+      <div class="kpi-icon">💰</div>
+      <div class="kpi-info">
+        <span class="kpi-label">Total Revenue</span>
+        <strong class="kpi-value">{{ cards.total_sales|money }}</strong>
+        <span class="kpi-subtext">{{ cards.invoice_count }} Invoices Total</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- KPI 2: Pending Receivables -->
+  <div class="col-6 col-lg-3">
+    <div class="kpi-card kpi-pending">
+      <div class="kpi-icon">⏳</div>
+      <div class="kpi-info">
+        <span class="kpi-label">Pending Amount</span>
+        <strong class="kpi-value text-danger">{{ cards.pending|money }}</strong>
+        <span class="kpi-subtext text-warning-emphasis">{{ cards.pending_count }} Unpaid Invoices</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- KPI 3: Collected Cash -->
+  <div class="col-6 col-lg-3">
+    <div class="kpi-card kpi-received">
+      <div class="kpi-icon">✅</div>
+      <div class="kpi-info">
+        <span class="kpi-label">Received Cash</span>
+        <strong class="kpi-value text-success">{{ cards.received|money }}</strong>
+        <span class="kpi-subtext text-success-emphasis">{{ cards.paid_count }} Paid Invoices</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- KPI 4: GST Liability -->
+  <div class="col-6 col-lg-3">
+    <div class="kpi-card kpi-gst">
+      <div class="kpi-icon">🏛️</div>
+      <div class="kpi-info">
+        <span class="kpi-label">GST Liability</span>
+        <strong class="kpi-value">{{ cards.total_gst|money }}</strong>
+        <span class="kpi-subtext">Taxable: {{ cards.taxable_sales|money }}</span>
+      </div>
+    </div>
+  </div>
 </div>
-<section class="panel">
-  <h2>Monthly Sales & GST</h2>
-  <canvas id="salesChart" height="110"></canvas>
-</section>
+
+<!-- Secondary Pipeline & Quick Actions Bar -->
+<div class="dashboard-pipeline-bar mb-4">
+  <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+    <div class="d-flex align-items-center gap-3">
+      <div class="pipeline-item">
+        <span class="text-muted small">Quotes Value:</span>
+        <strong class="ms-1">{{ cards.quotation_value|money }}</strong>
+      </div>
+      <div class="pipeline-item border-start ps-3">
+        <span class="text-muted small">Quotes Count:</span>
+        <strong class="ms-1">{{ cards.quotation_count }}</strong>
+      </div>
+      <div class="pipeline-item border-start ps-3">
+        <span class="text-muted small">Accepted:</span>
+        <span class="badge bg-success ms-1">{{ cards.accepted_quotations }}</span>
+      </div>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{{ url_for('main.new_invoice') }}" class="btn btn-sm btn-primary">⚡ New Invoice</a>
+      <a href="{{ url_for('main.new_quotation') }}" class="btn btn-sm btn-outline-primary">➕ New Quote</a>
+    </div>
+  </div>
+</div>
+
+<!-- Biometric Quick Setup Prompt (if supported) -->
+<div id="biometricSetupPrompt" class="alert alert-info d-flex align-items-center justify-content-between mb-4 shadow-sm" style="display:none !important;">
+  <div class="d-flex align-items-center gap-2">
+    <span style="font-size: 22px;">👆</span>
+    <div>
+      <strong class="d-block">Enable Fingerprint / Face ID Login</strong>
+      <small>Log in with 1-touch biometric security on this device without typing your password.</small>
+    </div>
+  </div>
+  <button id="enableBiometricBtn" class="btn btn-sm btn-dark text-nowrap ms-2">Enable Now</button>
+</div>
+
+<!-- Charts and Recent Activity Grid -->
+<div class="row g-4">
+  <!-- Chart Section -->
+  <div class="col-12 col-xl-7">
+    <section class="panel h-100">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="h5 fw-bold mb-0">Monthly Revenue & GST Trend</h2>
+        <span class="badge bg-secondary">Year {{ today.year }}</span>
+      </div>
+      <canvas id="salesChart" height="130"></canvas>
+    </section>
+  </div>
+
+  <!-- Recent Invoices List -->
+  <div class="col-12 col-xl-5">
+    <section class="panel h-100">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="h5 fw-bold mb-0">Recent Invoices</h2>
+        <a href="{{ url_for('main.invoices') }}" class="small text-decoration-none fw-semibold">View All →</a>
+      </div>
+      {% if recent_invoices %}
+      <div class="recent-list">
+        {% for inv in recent_invoices %}
+        <div class="recent-item d-flex justify-content-between align-items-center py-2 border-bottom">
+          <div>
+            <a href="{{ url_for('main.edit_invoice', invoice_id=inv.id) }}" class="fw-bold text-decoration-none d-block">
+              {{ inv.invoice_number }}
+            </a>
+            <small class="text-muted">{{ inv.customer.customer_name }} • {{ inv.invoice_date|datefmt }}</small>
+          </div>
+          <div class="text-end">
+            <strong class="d-block">{{ inv.rounded_total|money }}</strong>
+            <span class="badge {% if inv.payment_status == 'Paid' %}bg-success{% elif inv.payment_status == 'Pending' %}bg-warning text-dark{% else %}bg-secondary{% endif %}" style="font-size: 10px;">
+              {{ inv.payment_status }}
+            </span>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="text-center py-4 text-muted">
+        <p class="mb-2">No invoices created yet.</p>
+        <a href="{{ url_for('main.new_invoice') }}" class="btn btn-sm btn-primary">Create First Invoice</a>
+      </div>
+      {% endif %}
+    </section>
+  </div>
+</div>
 {% endblock %}
+
 {% block scripts %}
 <script>
 window.chartRows = {{ monthly_rows|tojson }};

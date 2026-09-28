@@ -18,6 +18,7 @@ class User(UserMixin, TimestampMixin, db.Model):
     password_hash = db.Column(db.String(255), nullable=False)
     role = db.Column(db.String(20), default="staff", nullable=False)
     active = db.Column(db.Boolean, default=True, nullable=False)
+    biometric_credential = db.Column(db.Text, nullable=True)
 
     @property
     def is_active(self):

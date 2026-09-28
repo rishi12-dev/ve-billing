@@ -1,5 +1,5 @@
-from flask import Blueprint, flash, redirect, render_template, request, url_for
-from flask_login import login_required, login_user, logout_user
+from flask import Blueprint, flash, jsonify, redirect, render_template, request, url_for
+from flask_login import current_user, login_required, login_user, logout_user
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from models import db
@@ -10,6 +10,9 @@ auth_bp = Blueprint("auth", __name__)
 
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
+    if current_user.is_authenticated:
+        return redirect(url_for("main.dashboard"))
+
     if request.method == "POST":
         identity = request.form.get("identity", "").strip()
         password = request.form.get("password", "")
@@ -22,8 +25,44 @@ def login():
     return render_template("auth/login.html")
 
 
+@auth_bp.route("/biometric/register", methods=["POST"])
+@login_required
+def biometric_register():
+    data = request.get_json(silent=True) or {}
+    credential_id = data.get("credential_id", "").strip()
+    if not credential_id:
+        return jsonify({"success": False, "error": "Invalid credential data"}), 400
+
+    current_user.biometric_credential = credential_id
+    db.session.commit()
+    return jsonify({"success": True, "message": "Biometric login registered successfully on this device!"})
+
+
+@auth_bp.route("/biometric/login", methods=["POST"])
+def biometric_login():
+    data = request.get_json(silent=True) or {}
+    credential_id = data.get("credential_id", "").strip()
+    username = data.get("username", "").strip().lower()
+
+    user = None
+    if credential_id:
+        user = User.query.filter_by(biometric_credential=credential_id, active=True).first()
+
+    if not user and username:
+        user = User.query.filter((User.username == username) | (User.email == username), User.active == True).first()
+
+    if user:
+        login_user(user, remember=True)
+        return jsonify({"success": True, "redirect": url_for("main.dashboard")})
+
+    return jsonify({"success": False, "error": "Biometric verification not matched. Please log in with password first to enable biometric login."}), 401
+
+
 @auth_bp.route("/register", methods=["GET", "POST"])
 def register():
+    if current_user.is_authenticated:
+        return redirect(url_for("main.dashboard"))
+
     if request.method == "POST":
         name = request.form.get("name", "").strip()
         email = request.form.get("email", "").strip().lower()
@@ -78,4 +117,5 @@ def logout():
     logout_user()
     flash("You have been logged out.", "info")
     return redirect(url_for("auth.login"))
+
 

@@ -92,6 +92,11 @@ def seed_defaults():
 
 def ensure_schema_compatibility():
     inspector = inspect(db.engine)
+    if "user" in inspector.get_table_names():
+        columns = {column["name"] for column in inspector.get_columns("user")}
+        if "biometric_credential" not in columns:
+            db.session.execute(text("ALTER TABLE user ADD COLUMN biometric_credential TEXT DEFAULT ''"))
+
     for table_name in ("quotation_item", "invoice_item"):
         if table_name in inspector.get_table_names():
             columns = {column["name"] for column in inspector.get_columns(table_name)}
