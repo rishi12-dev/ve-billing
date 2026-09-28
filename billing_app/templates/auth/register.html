@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="login-wrap">
+  <form class="login-card" method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="text-center mb-3">
+      <img src="{{ url_for('static', filename='icons/icon-96.png') }}" width="64" height="64" alt="Logo" class="rounded-circle shadow-sm mb-2">
+      <h1 class="h3 fw-bold mb-1">Create Account</h1>
+      <p class="text-muted small">Sign up for your VE-Billing account</p>
+    </div>
+
+    <div class="mb-2">
+      <label class="form-label small fw-semibold">Full Name</label>
+      <input class="form-control" name="name" placeholder="e.g. Rishi Goutham" required autofocus>
+    </div>
+
+    <div class="mb-2">
+      <label class="form-label small fw-semibold">Username</label>
+      <input class="form-control" name="username" placeholder="e.g. rishi12" required autocomplete="username">
+    </div>
+
+    <div class="mb-2">
+      <label class="form-label small fw-semibold">Email Address</label>
+      <input class="form-control" type="email" name="email" placeholder="name@company.com" required autocomplete="email">
+    </div>
+
+    <div class="mb-2">
+      <label class="form-label small fw-semibold">Password</label>
+      <input class="form-control" type="password" name="password" placeholder="At least 6 characters" minlength="6" required autocomplete="new-password">
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label small fw-semibold">Confirm Password</label>
+      <input class="form-control" type="password" name="confirm_password" placeholder="Re-enter password" minlength="6" required autocomplete="new-password">
+    </div>
+
+    <button class="btn btn-primary w-100 py-2 fw-semibold">Sign Up & Start</button>
+
+    <div class="text-center mt-3 small">
+      <span class="text-muted">Already have an account?</span>
+      <a href="{{ url_for('auth.login') }}" class="fw-bold text-decoration-none ms-1">Login here</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

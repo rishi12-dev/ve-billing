@@ -1,7 +1,8 @@
 from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import login_required, login_user, logout_user
-from werkzeug.security import check_password_hash
+from werkzeug.security import check_password_hash, generate_password_hash
 
+from models import db
 from models.core import User
 
 auth_bp = Blueprint("auth", __name__)
@@ -21,9 +22,60 @@ def login():
     return render_template("auth/login.html")
 
 
+@auth_bp.route("/register", methods=["GET", "POST"])
+def register():
+    if request.method == "POST":
+        name = request.form.get("name", "").strip()
+        email = request.form.get("email", "").strip().lower()
+        username = request.form.get("username", "").strip().lower()
+        password = request.form.get("password", "")
+        confirm_password = request.form.get("confirm_password", "")
+
+        if not name or not email or not username or not password:
+            flash("All fields are required.", "danger")
+            return render_template("auth/register.html")
+
+        if password != confirm_password:
+            flash("Passwords do not match.", "danger")
+            return render_template("auth/register.html")
+
+        if len(password) < 6:
+            flash("Password must be at least 6 characters long.", "danger")
+            return render_template("auth/register.html")
+
+        if User.query.filter_by(username=username).first():
+            flash("Username is already taken. Please choose another.", "danger")
+            return render_template("auth/register.html")
+
+        if User.query.filter_by(email=email).first():
+            flash("Email is already registered. Please log in.", "danger")
+            return render_template("auth/register.html")
+
+        user_count = User.query.count()
+        role = "admin" if user_count == 0 else "staff"
+
+        new_user = User(
+            name=name,
+            email=email,
+            username=username,
+            password_hash=generate_password_hash(password),
+            role=role,
+            active=True,
+        )
+        db.session.add(new_user)
+        db.session.commit()
+
+        login_user(new_user)
+        flash(f"Account created successfully! Welcome, {name}.", "success")
+        return redirect(url_for("main.dashboard"))
+
+    return render_template("auth/register.html")
+
+
 @auth_bp.route("/logout")
 @login_required
 def logout():
     logout_user()
     flash("You have been logged out.", "info")
     return redirect(url_for("auth.login"))
+
