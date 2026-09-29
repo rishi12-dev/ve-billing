@@ -1,4 +1,4 @@
-const CACHE_NAME = "ve-billing-cache-v5";
+const CACHE_NAME = "ve-billing-cache-v6";
 const STATIC_ASSETS = [
   "/static/css/app.css",
   "/static/js/app.js",

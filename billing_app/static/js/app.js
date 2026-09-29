@@ -92,67 +92,99 @@ function triggerInstall() {
 
 // ==========================================================================
 // Biometric (Fingerprint / Face ID / Touch ID) Authentication Flow
-// (Only active in Downloaded / Installed App)
 // ==========================================================================
+function bufferToBase64(buffer) {
+  const bytes = new Uint8Array(buffer);
+  let binary = "";
+  for (let i = 0; i < bytes.byteLength; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
+}
+
+function base64ToBuffer(base64) {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return bytes.buffer;
+}
+
 async function setupBiometric() {
   try {
-    const credId = "ve_bio_" + Math.random().toString(36).substring(2) + Date.now();
-    
-    if (window.PublicKeyCredential) {
-      const challenge = new Uint8Array(32);
-      window.crypto.getRandomValues(challenge);
-      
-      const createOptions = {
-        publicKey: {
-          challenge: challenge,
-          rp: { name: "VE-BILLING", id: window.location.hostname },
-          user: {
-            id: new Uint8Array([1, 2, 3, 4]),
-            name: "billing_user",
-            displayName: "VE Billing User"
-          },
-          pubKeyCredParams: [{ alg: -7, type: "public-key" }, { alg: -257, type: "public-key" }],
-          authenticatorSelection: {
-            authenticatorAttachment: "platform",
-            userVerification: "preferred"
-          },
-          timeout: 60000
-        }
-      };
+    const username = window.currentUserUsername || localStorage.getItem("ve_last_user") || "admin";
 
-      try {
-        const cred = await navigator.credentials.create(createOptions);
-        if (cred) {
-          const rawId = btoa(String.fromCharCode.apply(null, new Uint8Array(cred.rawId)));
-          await saveBiometricCredential(rawId);
-          return;
-        }
-      } catch (authErr) {
-        console.log("Platform authenticator fallback:", authErr);
-      }
+    if (!window.PublicKeyCredential) {
+      alert("Aapke browser/device me Fingerprint / Biometric support nahi hai.");
+      return;
     }
 
-    await saveBiometricCredential(credId);
+    const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable().catch(() => false);
+    if (!available) {
+      alert("Aapke device me Fingerprint / Screen Lock sensor available nahi mila.\nKripya phone settings me Screen Lock / Fingerprint enable karein.");
+      return;
+    }
+
+    const challenge = new Uint8Array(32);
+    window.crypto.getRandomValues(challenge);
+    const userId = new TextEncoder().encode(username);
+
+    const createOptions = {
+      publicKey: {
+        challenge: challenge,
+        rp: {
+          name: "VE-BILLING",
+          id: window.location.hostname
+        },
+        user: {
+          id: userId,
+          name: username,
+          displayName: username.toUpperCase()
+        },
+        pubKeyCredParams: [
+          { alg: -7, type: "public-key" },  // ES256
+          { alg: -257, type: "public-key" } // RS256
+        ],
+        authenticatorSelection: {
+          authenticatorAttachment: "platform",
+          userVerification: "required",
+          residentKey: "preferred"
+        },
+        timeout: 60000,
+        attestation: "none"
+      }
+    };
+
+    const cred = await navigator.credentials.create(createOptions);
+    if (!cred) {
+      alert("Fingerprint scan complete nahi hua.");
+      return;
+    }
+
+    const rawIdBase64 = bufferToBase64(cred.rawId);
+    await saveBiometricCredential(rawIdBase64, username);
   } catch (err) {
-    alert("Biometric setup failed: " + err.message);
+    if (err.name === "NotAllowedError" || err.message?.includes("cancel")) {
+      alert("Fingerprint scan cancel kar diya gaya.");
+    } else {
+      alert("Fingerprint setup error: " + err.message);
+    }
   }
 }
 
-async function saveBiometricCredential(credId) {
+async function saveBiometricCredential(credId, username) {
   try {
-    const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") || 
-                 document.querySelector('input[name="csrf_token"]')?.value || "";
-    const username = window.currentUserUsername || localStorage.getItem("ve_last_user") || "";
+    const user = username || window.currentUserUsername || localStorage.getItem("ve_last_user") || "admin";
     
     const res = await fetch("/biometric/register", {
       method: "POST",
       credentials: "same-origin",
       headers: { 
         "Content-Type": "application/json", 
-        "X-CSRFToken": csrf,
         "Accept": "application/json"
       },
-      body: JSON.stringify({ credential_id: credId, username: username })
+      body: JSON.stringify({ credential_id: credId, username: user })
     });
 
     const text = await res.text();
@@ -160,66 +192,71 @@ async function saveBiometricCredential(credId) {
     try {
       data = JSON.parse(text);
     } catch (e) {
-      console.warn("Raw response:", text);
-      alert("Server response error (" + res.status + "): " + text.substring(0, 150));
+      alert("Server response error: " + text.substring(0, 100));
       return;
     }
 
     if (data && data.success) {
       localStorage.setItem("ve_bio_credential", credId);
-      if (username) localStorage.setItem("ve_last_user", username);
-      alert("✅ Fingerprint / Face ID login enabled for this installed app!");
+      localStorage.setItem("ve_last_user", user);
+      alert("✅ Fingerprint / Screen Lock successfully register ho gaya!\nAb aap bina password dale 1-touch fingerprint se login kar sakte hain.");
       const prompt = document.getElementById("biometricSetupPrompt");
       if (prompt) prompt.style.display = "none";
     } else {
-      alert((data && data.error) ? data.error : "Failed to enable biometric login.");
+      alert((data && data.error) ? data.error : "Failed to register fingerprint.");
     }
   } catch (err) {
-    alert("Biometric setup error: " + err.message);
+    alert("Server error: " + err.message);
   }
 }
 
 async function loginBiometric() {
-  const inApp = isRunningInApp();
   const savedCred = localStorage.getItem("ve_bio_credential");
-  const lastUser = localStorage.getItem("ve_last_user") || "";
-
-  if (!inApp) {
-    alert("📱 Note: Fingerprint Login sirf App install/download karne ke baad chalta hai.\nKripya pehle browser menu se 'Install App' ya 'Add to Home screen' karein.");
-    return;
-  }
+  const lastUser = localStorage.getItem("ve_last_user") || "admin";
 
   if (!savedCred) {
-    alert("Biometric login is not setup yet.\nPehele password se login karein aur dashboard par 'Enable Fingerprint Login' par click karein.");
+    alert("Fingerprint pehle setup nahi hua hai.\n1. Pehle password se login karein.\n2. Dashboard par 'Scan & Setup Now' par tap karein.");
     return;
   }
 
   try {
-    if (window.PublicKeyCredential) {
-      const challenge = new Uint8Array(32);
-      window.crypto.getRandomValues(challenge);
-      try {
-        await navigator.credentials.get({
-          publicKey: {
-            challenge: challenge,
-            timeout: 60000,
-            userVerification: "preferred"
-          }
-        });
-      } catch (e) {
-        console.log("Biometric prompt skipped or fallback used:", e);
-      }
+    const challenge = new Uint8Array(32);
+    window.crypto.getRandomValues(challenge);
+
+    let allowList = [];
+    try {
+      const rawBuf = base64ToBuffer(savedCred);
+      allowList.push({
+        id: rawBuf,
+        type: "public-key",
+        transports: ["internal"]
+      });
+    } catch (e) {
+      console.warn("Buffer decode:", e);
     }
 
-    const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") || 
-                 document.querySelector('input[name="csrf_token"]')?.value || "";
+    const getOptions = {
+      publicKey: {
+        challenge: challenge,
+        rpId: window.location.hostname,
+        allowCredentials: allowList.length > 0 ? allowList : undefined,
+        userVerification: "required",
+        timeout: 60000
+      }
+    };
+
+    // Native Fingerprint / Screen Lock bottom sheet (GPay Style)
+    const assertion = await navigator.credentials.get(getOptions);
+    if (!assertion) {
+      alert("Biometric verification nahi ho paya.");
+      return;
+    }
 
     const res = await fetch("/biometric/login", {
       method: "POST",
       credentials: "same-origin",
       headers: { 
         "Content-Type": "application/json", 
-        "X-CSRFToken": csrf,
         "Accept": "application/json"
       },
       body: JSON.stringify({ credential_id: savedCred, username: lastUser })
@@ -230,17 +267,21 @@ async function loginBiometric() {
     try {
       data = JSON.parse(text);
     } catch (e) {
-      alert("Server response error (" + res.status + "): " + text.substring(0, 150));
+      alert("Server response error: " + text.substring(0, 100));
       return;
     }
 
     if (data && data.success && data.redirect) {
       window.location.href = data.redirect;
     } else {
-      alert((data && data.error) ? data.error : "Biometric login failed. Please log in with your password.");
+      alert((data && data.error) ? data.error : "Biometric login failed. Please use your password.");
     }
   } catch (err) {
-    alert("Biometric login error: " + err.message);
+    if (err.name === "NotAllowedError" || err.message?.includes("cancel")) {
+      console.log("User cancelled biometric prompt.");
+    } else {
+      alert("Fingerprint login error: " + err.message);
+    }
   }
 }
 
@@ -251,25 +292,24 @@ document.addEventListener("DOMContentLoaded", () => {
     btn.addEventListener("click", triggerInstall);
   });
 
-  const inApp = isRunningInApp();
   const enableBioBtn = document.getElementById("enableBiometricBtn");
   if (enableBioBtn) enableBioBtn.addEventListener("click", setupBiometric);
 
+  const menuBioBtn = document.getElementById("menuBiometricBtn");
+  if (menuBioBtn) menuBioBtn.addEventListener("click", setupBiometric);
+
   const bioPrompt = document.getElementById("biometricSetupPrompt");
   if (bioPrompt) {
-    if (inApp && !localStorage.getItem("ve_bio_credential")) {
-      bioPrompt.style.display = "flex";
-    } else {
+    if (localStorage.getItem("ve_bio_credential")) {
       bioPrompt.style.display = "none";
+    } else {
+      bioPrompt.style.display = "flex";
     }
   }
 
   const bioLoginBtn = document.getElementById("biometricLoginBtn");
   if (bioLoginBtn) {
     bioLoginBtn.addEventListener("click", loginBiometric);
-    if (!inApp) {
-      bioLoginBtn.title = "Available after adding to Home Screen / Installing App";
-    }
   }
 });
 
