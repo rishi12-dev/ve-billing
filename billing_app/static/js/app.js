@@ -199,9 +199,8 @@ async function saveBiometricCredential(credId, username) {
     if (data && data.success) {
       localStorage.setItem("ve_bio_credential", credId);
       localStorage.setItem("ve_last_user", user);
+      updateBioMenuBadge();
       alert("✅ Fingerprint / Screen Lock successfully register ho gaya!\nAb aap bina password dale 1-touch fingerprint se login kar sakte hain.");
-      const prompt = document.getElementById("biometricSetupPrompt");
-      if (prompt) prompt.style.display = "none";
     } else {
       alert((data && data.error) ? data.error : "Failed to register fingerprint.");
     }
@@ -210,12 +209,25 @@ async function saveBiometricCredential(credId, username) {
   }
 }
 
+function updateBioMenuBadge() {
+  const badge = document.getElementById("menuBioBadge");
+  if (!badge) return;
+  const isSetup = !!localStorage.getItem("ve_bio_credential");
+  if (isSetup) {
+    badge.textContent = "Active ✅";
+    badge.className = "badge bg-success";
+  } else {
+    badge.textContent = "Setup 👆";
+    badge.className = "badge bg-primary";
+  }
+}
+
 async function loginBiometric() {
   const savedCred = localStorage.getItem("ve_bio_credential");
   const lastUser = localStorage.getItem("ve_last_user") || "admin";
 
   if (!savedCred) {
-    alert("Fingerprint pehle setup nahi hua hai.\n1. Pehle password se login karein.\n2. Dashboard par 'Scan & Setup Now' par tap karein.");
+    alert("Fingerprint pehle setup nahi hua hai.\n1. Pehle password se login karein.\n2. Side Menu me 'Fingerprint Login' par tap karke apna fingerprint scan karein.");
     return;
   }
 
@@ -287,24 +299,24 @@ async function loginBiometric() {
 
 document.addEventListener("DOMContentLoaded", () => {
   initTheme();
+  updateBioMenuBadge();
 
   document.querySelectorAll("#menuInstallBtn, #pwaInstallBannerBtn, #pwaInstallHeaderBtn, #mobileMenuInstallBtn").forEach(btn => {
     btn.addEventListener("click", triggerInstall);
   });
 
-  const enableBioBtn = document.getElementById("enableBiometricBtn");
-  if (enableBioBtn) enableBioBtn.addEventListener("click", setupBiometric);
-
   const menuBioBtn = document.getElementById("menuBiometricBtn");
-  if (menuBioBtn) menuBioBtn.addEventListener("click", setupBiometric);
-
-  const bioPrompt = document.getElementById("biometricSetupPrompt");
-  if (bioPrompt) {
-    if (localStorage.getItem("ve_bio_credential")) {
-      bioPrompt.style.display = "none";
-    } else {
-      bioPrompt.style.display = "flex";
-    }
+  if (menuBioBtn) {
+    menuBioBtn.addEventListener("click", () => {
+      const isSetup = !!localStorage.getItem("ve_bio_credential");
+      if (isSetup) {
+        if (confirm("Fingerprint Login already enabled hai ✅\nKya aap naya fingerprint scan karke update/re-scan karna chahte hain?")) {
+          setupBiometric();
+        }
+      } else {
+        setupBiometric();
+      }
+    });
   }
 
   const bioLoginBtn = document.getElementById("biometricLoginBtn");
