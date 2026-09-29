@@ -139,20 +139,39 @@ async function setupBiometric() {
 }
 
 async function saveBiometricCredential(credId) {
-  const csrf = document.querySelector('input[name="csrf_token"]')?.value || "";
-  const res = await fetch("/auth/biometric/register", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "X-CSRFToken": csrf },
-    body: JSON.stringify({ credential_id: credId })
-  });
-  const data = await res.json();
-  if (data.success) {
-    localStorage.setItem("ve_bio_credential", credId);
-    alert("✅ Fingerprint / Face ID login enabled for this installed app!");
-    const prompt = document.getElementById("biometricSetupPrompt");
-    if (prompt) prompt.style.display = "none";
-  } else {
-    alert(data.error || "Failed to enable biometric login.");
+  try {
+    const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") || 
+                 document.querySelector('input[name="csrf_token"]')?.value || "";
+    
+    const res = await fetch("/auth/biometric/register", {
+      method: "POST",
+      headers: { 
+        "Content-Type": "application/json", 
+        "X-CSRFToken": csrf,
+        "Accept": "application/json"
+      },
+      body: JSON.stringify({ credential_id: credId })
+    });
+
+    const text = await res.text();
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch (e) {
+      console.warn("Raw response:", text);
+      data = { success: false, error: "Server response format error." };
+    }
+
+    if (data.success) {
+      localStorage.setItem("ve_bio_credential", credId);
+      alert("✅ Fingerprint / Face ID login enabled for this installed app!");
+      const prompt = document.getElementById("biometricSetupPrompt");
+      if (prompt) prompt.style.display = "none";
+    } else {
+      alert(data.error || "Failed to enable biometric login.");
+    }
+  } catch (err) {
+    alert("Biometric setup error: " + err.message);
   }
 }
 
@@ -187,14 +206,27 @@ async function loginBiometric() {
       }
     }
 
-    const csrf = document.querySelector('input[name="csrf_token"]')?.value || "";
+    const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") || 
+                 document.querySelector('input[name="csrf_token"]')?.value || "";
+
     const res = await fetch("/auth/biometric/login", {
       method: "POST",
-      headers: { "Content-Type": "application/json", "X-CSRFToken": csrf },
+      headers: { 
+        "Content-Type": "application/json", 
+        "X-CSRFToken": csrf,
+        "Accept": "application/json"
+      },
       body: JSON.stringify({ credential_id: savedCred })
     });
 
-    const data = await res.json();
+    const text = await res.text();
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch (e) {
+      data = { success: false, error: "Server response format error." };
+    }
+
     if (data.success && data.redirect) {
       window.location.href = data.redirect;
     } else {

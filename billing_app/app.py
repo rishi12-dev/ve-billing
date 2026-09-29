@@ -32,6 +32,10 @@ def create_app():
     login_manager.login_view = "auth.login"
     login_manager.login_message_category = "warning"
 
+    from routes.auth import biometric_login, biometric_register
+    csrf.exempt(biometric_login)
+    csrf.exempt(biometric_register)
+
     app.register_blueprint(auth_bp)
     app.register_blueprint(main_bp)
 
