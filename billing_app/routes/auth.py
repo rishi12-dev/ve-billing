@@ -28,34 +28,45 @@ def login():
 @auth_bp.route("/biometric/register", methods=["POST"])
 @login_required
 def biometric_register():
-    data = request.get_json(silent=True) or {}
-    credential_id = data.get("credential_id", "").strip()
-    if not credential_id:
-        return jsonify({"success": False, "error": "Invalid credential data"}), 400
+    try:
+        data = request.get_json(silent=True) or {}
+        credential_id = data.get("credential_id", "").strip()
+        if not credential_id:
+            return jsonify({"success": False, "error": "Invalid credential data"}), 400
 
-    current_user.biometric_credential = credential_id
-    db.session.commit()
-    return jsonify({"success": True, "message": "Biometric login registered successfully on this device!"})
+        user = db.session.get(User, current_user.id)
+        if user:
+            user.biometric_credential = credential_id
+            db.session.commit()
+            return jsonify({"success": True, "message": "Biometric login registered successfully on this device!"})
+        return jsonify({"success": False, "error": "User session expired. Please log in again."}), 401
+    except Exception as exc:
+        db.session.rollback()
+        return jsonify({"success": False, "error": f"Database error: {str(exc)}"}), 500
 
 
 @auth_bp.route("/biometric/login", methods=["POST"])
 def biometric_login():
-    data = request.get_json(silent=True) or {}
-    credential_id = data.get("credential_id", "").strip()
-    username = data.get("username", "").strip().lower()
+    try:
+        data = request.get_json(silent=True) or {}
+        credential_id = data.get("credential_id", "").strip()
+        username = data.get("username", "").strip().lower()
 
-    user = None
-    if credential_id:
-        user = User.query.filter_by(biometric_credential=credential_id, active=True).first()
+        user = None
+        if credential_id:
+            user = User.query.filter_by(biometric_credential=credential_id, active=True).first()
 
-    if not user and username:
-        user = User.query.filter((User.username == username) | (User.email == username), User.active == True).first()
+        if not user and username:
+            user = User.query.filter((User.username == username) | (User.email == username), User.active == True).first()
 
-    if user:
-        login_user(user, remember=True)
-        return jsonify({"success": True, "redirect": url_for("main.dashboard")})
+        if user:
+            login_user(user, remember=True)
+            return jsonify({"success": True, "redirect": url_for("main.dashboard")})
 
-    return jsonify({"success": False, "error": "Biometric verification not matched. Please log in with password first to enable biometric login."}), 401
+        return jsonify({"success": False, "error": "Biometric verification not matched. Please log in with your password first."}), 401
+    except Exception as exc:
+        db.session.rollback()
+        return jsonify({"success": False, "error": f"Login error: {str(exc)}"}), 500
 
 
 @auth_bp.route("/register", methods=["GET", "POST"])

@@ -95,22 +95,32 @@ def seed_defaults():
 
 
 def ensure_schema_compatibility():
-    inspector = inspect(db.engine)
-    if "user" in inspector.get_table_names():
-        columns = {column["name"] for column in inspector.get_columns("user")}
-        if "biometric_credential" not in columns:
-            db.session.execute(text("ALTER TABLE user ADD COLUMN biometric_credential TEXT DEFAULT ''"))
+    try:
+        inspector = inspect(db.engine)
+        tables = set(inspector.get_table_names())
+        if "user" in tables:
+            columns = {column["name"] for column in inspector.get_columns("user")}
+            if "biometric_credential" not in columns:
+                db.session.execute(text("ALTER TABLE user ADD COLUMN biometric_credential TEXT DEFAULT ''"))
+                db.session.commit()
 
-    for table_name in ("quotation_item", "invoice_item"):
-        if table_name in inspector.get_table_names():
-            columns = {column["name"] for column in inspector.get_columns(table_name)}
-            if "hsn_code" not in columns:
-                db.session.execute(text(f"ALTER TABLE {table_name} ADD COLUMN hsn_code VARCHAR(40) DEFAULT ''"))
-    if {"quotation", "quotation_item"}.issubset(set(inspector.get_table_names())):
-        db.session.execute(text("DELETE FROM quotation_item WHERE quotation_id NOT IN (SELECT id FROM quotation)"))
-    if {"invoice", "invoice_item"}.issubset(set(inspector.get_table_names())):
-        db.session.execute(text("DELETE FROM invoice_item WHERE invoice_id NOT IN (SELECT id FROM invoice)"))
-    db.session.commit()
+        for table_name in ("quotation_item", "invoice_item"):
+            if table_name in tables:
+                columns = {column["name"] for column in inspector.get_columns(table_name)}
+                if "hsn_code" not in columns:
+                    db.session.execute(text(f"ALTER TABLE {table_name} ADD COLUMN hsn_code VARCHAR(40) DEFAULT ''"))
+                    db.session.commit()
+
+        if {"quotation", "quotation_item"}.issubset(tables):
+            db.session.execute(text("DELETE FROM quotation_item WHERE quotation_id NOT IN (SELECT id FROM quotation)"))
+            db.session.commit()
+
+        if {"invoice", "invoice_item"}.issubset(tables):
+            db.session.execute(text("DELETE FROM invoice_item WHERE invoice_id NOT IN (SELECT id FROM invoice)"))
+            db.session.commit()
+    except Exception as exc:
+        db.session.rollback()
+        print("Schema compatibility note:", exc)
 
 
 if __name__ == "__main__":
