@@ -4,6 +4,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 from models import db
 from models.core import User
+from sqlalchemy import func
 
 auth_bp = Blueprint("auth", __name__)
 
@@ -26,38 +27,54 @@ def login():
 
 
 @auth_bp.route("/biometric/register", methods=["POST"])
-@login_required
+@auth_bp.route("/auth/biometric/register", methods=["POST"])
 def biometric_register():
     try:
         data = request.get_json(silent=True) or {}
-        credential_id = data.get("credential_id", "").strip()
+        credential_id = str(data.get("credential_id", "")).strip()
+        username = str(data.get("username", "")).strip().lower()
+
         if not credential_id:
             return jsonify({"success": False, "error": "Invalid credential data"}), 400
 
-        user = db.session.get(User, current_user.id)
-        if user:
-            user.biometric_credential = credential_id
-            db.session.commit()
-            return jsonify({"success": True, "message": "Biometric login registered successfully on this device!"})
-        return jsonify({"success": False, "error": "User session expired. Please log in again."}), 401
+        user = None
+        if current_user.is_authenticated:
+            user = db.session.get(User, current_user.id)
+        
+        if not user and username:
+            user = User.query.filter(
+                (func.lower(User.username) == username) | (func.lower(User.email) == username),
+                User.active == True
+            ).first()
+
+        if not user:
+            return jsonify({"success": False, "error": "User session not found. Please log in with password first."}), 401
+
+        user.biometric_credential = credential_id
+        db.session.commit()
+        return jsonify({"success": True, "message": "Biometric login registered successfully on this device!"})
     except Exception as exc:
         db.session.rollback()
         return jsonify({"success": False, "error": f"Database error: {str(exc)}"}), 500
 
 
 @auth_bp.route("/biometric/login", methods=["POST"])
+@auth_bp.route("/auth/biometric/login", methods=["POST"])
 def biometric_login():
     try:
         data = request.get_json(silent=True) or {}
-        credential_id = data.get("credential_id", "").strip()
-        username = data.get("username", "").strip().lower()
+        credential_id = str(data.get("credential_id", "")).strip()
+        username = str(data.get("username", "")).strip().lower()
 
         user = None
         if credential_id:
             user = User.query.filter_by(biometric_credential=credential_id, active=True).first()
 
         if not user and username:
-            user = User.query.filter((User.username == username) | (User.email == username), User.active == True).first()
+            user = User.query.filter(
+                (func.lower(User.username) == username) | (func.lower(User.email) == username),
+                User.active == True
+            ).first()
 
         if user:
             login_user(user, remember=True)

@@ -142,15 +142,17 @@ async function saveBiometricCredential(credId) {
   try {
     const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") || 
                  document.querySelector('input[name="csrf_token"]')?.value || "";
+    const username = window.currentUserUsername || localStorage.getItem("ve_last_user") || "";
     
-    const res = await fetch("/auth/biometric/register", {
+    const res = await fetch("/biometric/register", {
       method: "POST",
+      credentials: "same-origin",
       headers: { 
         "Content-Type": "application/json", 
         "X-CSRFToken": csrf,
         "Accept": "application/json"
       },
-      body: JSON.stringify({ credential_id: credId })
+      body: JSON.stringify({ credential_id: credId, username: username })
     });
 
     const text = await res.text();
@@ -159,16 +161,18 @@ async function saveBiometricCredential(credId) {
       data = JSON.parse(text);
     } catch (e) {
       console.warn("Raw response:", text);
-      data = { success: false, error: "Server response format error." };
+      alert("Server response error (" + res.status + "): " + text.substring(0, 150));
+      return;
     }
 
-    if (data.success) {
+    if (data && data.success) {
       localStorage.setItem("ve_bio_credential", credId);
+      if (username) localStorage.setItem("ve_last_user", username);
       alert("✅ Fingerprint / Face ID login enabled for this installed app!");
       const prompt = document.getElementById("biometricSetupPrompt");
       if (prompt) prompt.style.display = "none";
     } else {
-      alert(data.error || "Failed to enable biometric login.");
+      alert((data && data.error) ? data.error : "Failed to enable biometric login.");
     }
   } catch (err) {
     alert("Biometric setup error: " + err.message);
@@ -178,6 +182,7 @@ async function saveBiometricCredential(credId) {
 async function loginBiometric() {
   const inApp = isRunningInApp();
   const savedCred = localStorage.getItem("ve_bio_credential");
+  const lastUser = localStorage.getItem("ve_last_user") || "";
 
   if (!inApp) {
     alert("📱 Note: Fingerprint Login sirf App install/download karne ke baad chalta hai.\nKripya pehle browser menu se 'Install App' ya 'Add to Home screen' karein.");
@@ -209,14 +214,15 @@ async function loginBiometric() {
     const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") || 
                  document.querySelector('input[name="csrf_token"]')?.value || "";
 
-    const res = await fetch("/auth/biometric/login", {
+    const res = await fetch("/biometric/login", {
       method: "POST",
+      credentials: "same-origin",
       headers: { 
         "Content-Type": "application/json", 
         "X-CSRFToken": csrf,
         "Accept": "application/json"
       },
-      body: JSON.stringify({ credential_id: savedCred })
+      body: JSON.stringify({ credential_id: savedCred, username: lastUser })
     });
 
     const text = await res.text();
@@ -224,13 +230,14 @@ async function loginBiometric() {
     try {
       data = JSON.parse(text);
     } catch (e) {
-      data = { success: false, error: "Server response format error." };
+      alert("Server response error (" + res.status + "): " + text.substring(0, 150));
+      return;
     }
 
-    if (data.success && data.redirect) {
+    if (data && data.success && data.redirect) {
       window.location.href = data.redirect;
     } else {
-      alert(data.error || "Biometric login failed. Please log in with your password.");
+      alert((data && data.error) ? data.error : "Biometric login failed. Please log in with your password.");
     }
   } catch (err) {
     alert("Biometric login error: " + err.message);

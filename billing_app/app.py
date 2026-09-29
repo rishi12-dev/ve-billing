@@ -98,26 +98,51 @@ def ensure_schema_compatibility():
     try:
         inspector = inspect(db.engine)
         tables = set(inspector.get_table_names())
-        if "user" in tables:
-            columns = {column["name"] for column in inspector.get_columns("user")}
+        if "user" in tables or "User" in tables:
+            user_tbl = "user" if "user" in tables else "User"
+            columns = {column["name"] for column in inspector.get_columns(user_tbl)}
             if "biometric_credential" not in columns:
-                db.session.execute(text("ALTER TABLE user ADD COLUMN biometric_credential TEXT DEFAULT ''"))
-                db.session.commit()
+                try:
+                    db.session.execute(text('ALTER TABLE "user" ADD COLUMN biometric_credential TEXT DEFAULT \'\''))
+                    db.session.commit()
+                except Exception:
+                    db.session.rollback()
+                    try:
+                        db.session.execute(text("ALTER TABLE user ADD COLUMN biometric_credential TEXT DEFAULT ''"))
+                        db.session.commit()
+                    except Exception as e:
+                        db.session.rollback()
+                        print("User biometric alter note:", e)
 
         for table_name in ("quotation_item", "invoice_item"):
             if table_name in tables:
                 columns = {column["name"] for column in inspector.get_columns(table_name)}
                 if "hsn_code" not in columns:
-                    db.session.execute(text(f"ALTER TABLE {table_name} ADD COLUMN hsn_code VARCHAR(40) DEFAULT ''"))
-                    db.session.commit()
+                    try:
+                        db.session.execute(text(f'ALTER TABLE "{table_name}" ADD COLUMN hsn_code VARCHAR(40) DEFAULT \'\''))
+                        db.session.commit()
+                    except Exception:
+                        db.session.rollback()
+                        try:
+                            db.session.execute(text(f"ALTER TABLE {table_name} ADD COLUMN hsn_code VARCHAR(40) DEFAULT ''"))
+                            db.session.commit()
+                        except Exception as e:
+                            db.session.rollback()
+                            print(f"{table_name} alter note:", e)
 
         if {"quotation", "quotation_item"}.issubset(tables):
-            db.session.execute(text("DELETE FROM quotation_item WHERE quotation_id NOT IN (SELECT id FROM quotation)"))
-            db.session.commit()
+            try:
+                db.session.execute(text("DELETE FROM quotation_item WHERE quotation_id NOT IN (SELECT id FROM quotation)"))
+                db.session.commit()
+            except Exception:
+                db.session.rollback()
 
         if {"invoice", "invoice_item"}.issubset(tables):
-            db.session.execute(text("DELETE FROM invoice_item WHERE invoice_id NOT IN (SELECT id FROM invoice)"))
-            db.session.commit()
+            try:
+                db.session.execute(text("DELETE FROM invoice_item WHERE invoice_id NOT IN (SELECT id FROM invoice)"))
+                db.session.commit()
+            except Exception:
+                db.session.rollback()
     except Exception as exc:
         db.session.rollback()
         print("Schema compatibility note:", exc)
