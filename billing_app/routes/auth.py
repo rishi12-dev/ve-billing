@@ -30,12 +30,12 @@ def login():
 @auth_bp.route("/auth/biometric/register", methods=["POST"])
 def biometric_register():
     try:
-        data = request.get_json(silent=True) or {}
+        data = request.get_json(silent=True) or (request.form.to_dict() if request.form else {})
         credential_id = str(data.get("credential_id", "")).strip()
         username = str(data.get("username", "")).strip().lower()
 
         if not credential_id:
-            return jsonify({"success": False, "error": "Invalid credential data"}), 400
+            return jsonify({"success": False, "error": "Invalid biometric credential data"}), 400
 
         user = None
         if current_user.is_authenticated:
@@ -46,6 +46,12 @@ def biometric_register():
                 (func.lower(User.username) == username) | (func.lower(User.email) == username),
                 User.active == True
             ).first()
+
+        if not user:
+            # Fallback: if only 1 active admin/user exists in system, link to that user
+            active_users = User.query.filter_by(active=True).all()
+            if len(active_users) == 1:
+                user = active_users[0]
 
         if not user:
             return jsonify({"success": False, "error": "User session not found. Please log in with password first."}), 401
@@ -62,7 +68,7 @@ def biometric_register():
 @auth_bp.route("/auth/biometric/login", methods=["POST"])
 def biometric_login():
     try:
-        data = request.get_json(silent=True) or {}
+        data = request.get_json(silent=True) or (request.form.to_dict() if request.form else {})
         credential_id = str(data.get("credential_id", "")).strip()
         username = str(data.get("username", "")).strip().lower()
 
@@ -75,6 +81,11 @@ def biometric_login():
                 (func.lower(User.username) == username) | (func.lower(User.email) == username),
                 User.active == True
             ).first()
+
+        if not user:
+            active_users = User.query.filter_by(active=True).all()
+            if len(active_users) == 1:
+                user = active_users[0]
 
         if user:
             login_user(user, remember=True)

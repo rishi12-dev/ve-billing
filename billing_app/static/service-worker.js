@@ -1,6 +1,5 @@
-const CACHE_NAME = "ve-billing-cache-v2";
+const CACHE_NAME = "ve-billing-cache-v5";
 const STATIC_ASSETS = [
-  "/",
   "/static/css/app.css",
   "/static/js/app.js",
   "/static/icons/icon-192.png",
@@ -35,10 +34,17 @@ self.addEventListener("activate", event => {
 });
 
 self.addEventListener("fetch", event => {
-  if (event.request.method !== "GET") return;
+  // Always bypass cache for non-GET or biometric / api requests
+  if (event.request.method !== "GET" || event.request.url.includes("/biometric") || event.request.url.includes("/auth")) {
+    return;
+  }
   event.respondWith(
-    fetch(event.request).catch(() => {
-      return caches.match(event.request);
-    })
+    fetch(event.request)
+      .then(response => {
+        return response;
+      })
+      .catch(() => {
+        return caches.match(event.request);
+      })
   );
 });

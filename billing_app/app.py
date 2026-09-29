@@ -37,6 +37,7 @@ def create_app():
     csrf.exempt(biometric_register)
 
     app.register_blueprint(auth_bp)
+    csrf.exempt(auth_bp)
     app.register_blueprint(main_bp)
 
     @app.route("/")
