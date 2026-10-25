@@ -131,6 +131,28 @@ def ensure_schema_compatibility():
                             db.session.rollback()
                             print(f"{table_name} alter note:", e)
 
+        document_columns = {
+            "quotation": {"reference_number": "VARCHAR(120) DEFAULT ''"},
+            "invoice": {
+                "reference_number": "VARCHAR(120) DEFAULT ''",
+                "notes": "TEXT DEFAULT ''",
+                "terms": "TEXT DEFAULT ''",
+            },
+        }
+        for table_name, required_columns in document_columns.items():
+            if table_name not in tables:
+                continue
+            existing_columns = {column["name"] for column in inspector.get_columns(table_name)}
+            for column_name, column_type in required_columns.items():
+                if column_name in existing_columns:
+                    continue
+                try:
+                    db.session.execute(text(f"ALTER TABLE {table_name} ADD COLUMN {column_name} {column_type}"))
+                    db.session.commit()
+                except Exception as e:
+                    db.session.rollback()
+                    print(f"{table_name}.{column_name} alter note:", e)
+
         if {"quotation", "quotation_item"}.issubset(tables):
             try:
                 db.session.execute(text("DELETE FROM quotation_item WHERE quotation_id NOT IN (SELECT id FROM quotation)"))

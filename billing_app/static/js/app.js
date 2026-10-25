@@ -451,13 +451,13 @@ document.addEventListener("DOMContentLoaded", () => {
         if (fields.id) fields.id.value = "";
         return;
       }
-      fields.id.value = selected.dataset.id || "";
-      fields.company.value = selected.dataset.company || "";
-      fields.ship.value = selected.dataset.ship || "";
-      fields.gstin.value = selected.dataset.gstin || "";
-      fields.phone.value = selected.dataset.phone || "";
-      fields.email.value = selected.dataset.email || "";
-      fields.address.value = selected.dataset.address || "";
+      if (fields.id) fields.id.value = selected.dataset.id || "";
+      if (fields.company) fields.company.value = selected.dataset.company || "";
+      if (fields.ship) fields.ship.value = selected.dataset.ship || "";
+      if (fields.gstin) fields.gstin.value = selected.dataset.gstin || "";
+      if (fields.phone) fields.phone.value = selected.dataset.phone || "";
+      if (fields.email) fields.email.value = selected.dataset.email || "";
+      if (fields.address) fields.address.value = selected.dataset.address || "";
     });
   }
 

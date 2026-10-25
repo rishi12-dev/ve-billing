@@ -159,9 +159,14 @@ def _party_block(kind, document, styles):
     ]
     if customer.gstin:
         left.append(Paragraph(f"GSTIN: {customer.gstin}", styles["Cell"]))
+    if customer.phone:
+        left.append(Paragraph(f"Phone: {customer.phone}", styles["Cell"]))
+    if getattr(document, "subject", ""):
+        left.append(Paragraph(f"<b>Subject:</b> {document.subject}", styles["Cell"]))
     label = "Invoice No." if kind == "Invoice" else "Quotation No."
     right_rows = [
         [label, ":", doc_number],
+        ["Reference No.", ":", getattr(document, "reference_number", "") or "-"],
         ["Date", ":", date_value.strftime("%d-%m-%Y") if hasattr(date_value, "strftime") else date_value],
         ["Place of Supply", ":", customer.state or "Tamil Nadu"],
         ["Reverse Charge", ":", "No"],
@@ -273,7 +278,7 @@ def _amount_words_block(document, styles):
 def _terms_block(document, styles):
     company = _company()
     is_quotation = hasattr(document, "quotation_number")
-    terms_source = QUOTATION_DEFAULT_TERMS if is_quotation else (getattr(document, "terms", "") or company["terms"])
+    terms_source = getattr(document, "terms", "") or (QUOTATION_DEFAULT_TERMS if is_quotation else company["terms"])
     terms = [line.strip() for line in terms_source.splitlines() if line.strip()]
     terms_rows = [[Paragraph("<b>Terms & Conditions :</b>", styles["CellBold"])]]
     for index, term in enumerate(terms, start=1):
@@ -294,8 +299,6 @@ def _terms_block(document, styles):
 
 
 def _optional_terms(document, styles):
-    if not hasattr(document, "quotation_number"):
-        return []
     return [Spacer(1, 7), _terms_block(document, styles)]
 
 

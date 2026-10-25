@@ -38,6 +38,11 @@
           <input class="form-control" name="subject" value="{{ doc.subject if doc else '' }}" placeholder="e.g. Supply and Installation of Machinery Parts">
         </div>
 
+        <div class="mb-3">
+          <label class="form-label small fw-semibold">Customer / Company Reference No.</label>
+          <input class="form-control" name="reference_number" value="{{ doc.reference_number if doc else '' }}" placeholder="PO No., customer reference, or company reference">
+        </div>
+
         {% if kind == "Invoice" %}
         <div class="mb-2">
           <label class="form-label small fw-semibold">Payment Status</label>
@@ -193,12 +198,10 @@
     <div class="col-12 col-lg-6">
       <div class="panel h-100">
         <h2 class="h5 fw-bold mb-3">Terms & Notes</h2>
-        {% if kind != "Invoice" %}
         <div class="mb-3">
           <label class="form-label small">Terms & Conditions</label>
           <textarea class="form-control form-control-sm" rows="4" name="terms">{{ doc.terms if doc else default_terms|default('') }}</textarea>
         </div>
-        {% endif %}
         <div>
           <label class="form-label small">Notes</label>
           <textarea class="form-control form-control-sm" rows="3" name="notes" placeholder="Special instructions, delivery timeline, bank details...">{{ doc.notes if doc else '' }}</textarea>

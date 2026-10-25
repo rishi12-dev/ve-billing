@@ -191,11 +191,24 @@ def resolve_customer_from_form():
     if customer_id:
         customer = db.session.get(Customer, int(customer_id))
         if customer:
+            customer.customer_name = customer_name or customer.customer_name
+            customer.company_name = request.form.get("customer_company", "").strip()
+            customer.ship_name = request.form.get("customer_ship", "").strip()
+            customer.address = request.form.get("customer_address", "").strip()
+            customer.gstin = request.form.get("customer_gstin", "").strip()
+            customer.phone = request.form.get("customer_phone", "").strip()
+            customer.email = request.form.get("customer_email", "").strip()
             return customer.id
     if not customer_name:
         raise ValueError("Please enter customer details.")
     existing = Customer.query.filter(func.lower(Customer.customer_name) == customer_name.lower()).first()
     if existing:
+        existing.company_name = request.form.get("customer_company", "").strip()
+        existing.ship_name = request.form.get("customer_ship", "").strip()
+        existing.address = request.form.get("customer_address", "").strip()
+        existing.gstin = request.form.get("customer_gstin", "").strip()
+        existing.phone = request.form.get("customer_phone", "").strip()
+        existing.email = request.form.get("customer_email", "").strip()
         return existing.id
     customer = Customer(
         customer_name=customer_name,
@@ -335,6 +348,7 @@ def new_quotation():
                 date=parse_date(request.form.get("date")),
                 customer_id=resolve_customer_from_form(),
                 subject=request.form.get("subject", "").strip(),
+                reference_number=request.form.get("reference_number", "").strip(),
                 notes=request.form.get("notes", "").strip(),
                 terms=request.form.get("terms", "").strip() or QUOTATION_DEFAULT_TERMS,
                 status=request.form.get("status", "Draft"),
@@ -369,6 +383,7 @@ def edit_quotation(quotation_id):
             quotation.date = parse_date(request.form.get("date"))
             quotation.customer_id = resolve_customer_from_form()
             quotation.subject = request.form.get("subject", "").strip()
+            quotation.reference_number = request.form.get("reference_number", "").strip()
             quotation.notes = request.form.get("notes", "").strip()
             quotation.terms = request.form.get("terms", "").strip()
             quotation.status = request.form.get("status", "Draft")
@@ -395,7 +410,12 @@ def convert_quotation(quotation_id):
     if not quotation:
         flash("Quotation not found.", "danger")
         return redirect(url_for("main.quotations"))
-    invoice = Invoice(invoice_number=generate_invoice_number(), invoice_date=date.today(), customer_id=quotation.customer_id, quotation_id=quotation.id, subject=quotation.subject)
+    invoice = Invoice(
+        invoice_number=generate_invoice_number(), invoice_date=date.today(),
+        customer_id=quotation.customer_id, quotation_id=quotation.id,
+        subject=quotation.subject, reference_number=quotation.reference_number,
+        notes=quotation.notes, terms=quotation.terms,
+    )
     for qitem in quotation.items:
         invoice.items.append(InvoiceItem(description=qitem.description, hsn_code=qitem.hsn_code, quantity=qitem.quantity, unit=qitem.unit, rate=qitem.rate, discount=qitem.discount, gst_rate=qitem.gst_rate))
     apply_document_totals(invoice)
@@ -432,6 +452,9 @@ def new_invoice():
                 invoice_date=parse_date(request.form.get("date")),
                 customer_id=resolve_customer_from_form(),
                 subject=request.form.get("subject", "").strip(),
+                reference_number=request.form.get("reference_number", "").strip(),
+                notes=request.form.get("notes", "").strip(),
+                terms=request.form.get("terms", "").strip(),
                 payment_status=request.form.get("payment_status", "Pending"),
             )
             invoice.items = items_from_form(InvoiceItem)
@@ -472,6 +495,9 @@ def edit_invoice(invoice_id):
             invoice.invoice_date = parse_date(request.form.get("date"))
             invoice.customer_id = resolve_customer_from_form()
             invoice.subject = request.form.get("subject", "").strip()
+            invoice.reference_number = request.form.get("reference_number", "").strip()
+            invoice.notes = request.form.get("notes", "").strip()
+            invoice.terms = request.form.get("terms", "").strip()
             invoice.payment_status = request.form.get("payment_status", "Pending")
             invoice.items = items_from_form(InvoiceItem)
             apply_document_totals(invoice)
