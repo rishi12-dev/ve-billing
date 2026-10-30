@@ -25,7 +25,7 @@ from models.core import (
 )
 from services.audit import log_action
 from services.export_service import export_rows
-from services.numbering import generate_invoice_number
+from services.numbering import generate_invoice_number, peek_next_invoice_number
 from services.pdf_service import generate_document_pdf
 from utils.money import amount_in_words, calculate_item, dec, money, whole_rupees
 
@@ -438,7 +438,11 @@ def invoices():
     query = Invoice.query.join(Customer)
     if q:
         query = query.filter(or_(Invoice.invoice_number.contains(q), Customer.customer_name.contains(q), Customer.ship_name.contains(q), Customer.gstin.contains(q), Invoice.payment_status.contains(q)))
-    return render_template("invoices.html", invoices=query.order_by(Invoice.invoice_date.desc()).all())
+    return render_template(
+        "invoices.html",
+        invoices=query.order_by(Invoice.invoice_date.desc()).all(),
+        next_invoice_number=peek_next_invoice_number(),
+    )
 
 
 @main_bp.route("/invoices/new", methods=["GET", "POST"])
@@ -476,8 +480,12 @@ def new_invoice():
         except Exception as exc:
             db.session.rollback()
             flash(str(exc), "danger")
-    number = generate_invoice_number()
-    db.session.commit()
+    if request.method == "POST":
+        # Keep the number the user submitted if validation or saving failed.
+        number = request.form.get("invoice_number", "").strip() or generate_invoice_number()
+    else:
+        number = generate_invoice_number()
+        db.session.commit()
     return render_template("document_form.html", kind="Invoice", customers=customers, action=url_for("main.new_invoice"), number=number, document=None, item=None, mode="new")
 
 
